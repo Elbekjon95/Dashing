@@ -190,19 +190,12 @@ svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: va
 .wmap__seg button.on { background: #bff0e2; color: #0b3b38; font-weight: 600; }
 .wmap__foot { color: var(--d-muted); font-size: 12px; min-height: 16px; margin-top: 8px; }
 .wmap__top { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.wmap__top button { display: inline-grid; grid-template-columns: auto minmax(0, 120px) auto; align-items: center; gap: 8px; background: rgba(190, 240, 226, 0.1); border: 1px solid var(--d-line); color: var(--d-ink); border-radius: 999px; padding: 5px 12px; font-size: 12px; }
+.wmapw .wmap__top button { display: inline-grid; grid-template-columns: auto minmax(0, 120px) auto; align-items: center; gap: 8px; background: rgba(190, 240, 226, 0.1); border: 1px solid var(--d-line); color: var(--d-ink); border-radius: 999px; padding: 5px 12px; font-size: 12px; }
 .wmap__top button:hover, .wmap__top button.on { background: rgba(190, 240, 226, 0.26); border-color: #bff0e2; }
 .wmap__top button span { color: var(--d-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wmap__top button i { font-style: normal; font-weight: 700; color: #ffc48a; }
 .wmap__svg { width: 100%; height: auto; display: block; overflow: hidden; }
-.wmap__land { fill: rgba(190, 240, 226, 0.34); }
-.wmap__land circle { r: var(--lr, 0.62px); }
-.wmap__arc { fill: none; stroke: url(#gArc); stroke-linecap: round; animation: wmap-flow 1.6s linear infinite; opacity: 0.85; }
-.wmap__arc.hot { opacity: 1; stroke: #ffe2bd; }
 @keyframes wmap-flow { to { stroke-dashoffset: -22; } }
-.wmap__bubble { fill: rgba(138, 212, 196, 0.6); stroke: #bff0e2; cursor: pointer; }
-.wmap__bubble.hot { fill: #8ad4c4; stroke: #fff; }
-.wmap__count { font-weight: 700; pointer-events: none; }
 .wmap__home { fill: #ff9a4d; }
 .wmap__ring { fill: none; stroke: #ff9a4d; animation: wmap-pulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes wmap-pulse { from { opacity: 0.9; transform: scale(0.4); } to { opacity: 0; transform: scale(1.6); } }
@@ -528,3 +521,57 @@ body { background: var(--page); }
 .adm__act button:hover:not(:disabled) { background: #f3f6f6; }
 .adm__act button:disabled { opacity: 0.4; cursor: default; }
 .adm__act .adm__del:hover:not(:disabled) { background: #fdeceb; color: #b91c1c; border-color: #f0b7b3; }
+
+.yc__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.yc__card { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px 14px; border: 1px solid var(--v-line); border-radius: 18px; background: rgba(255, 255, 255, 0.7); }
+.yc__card--cur { background: linear-gradient(160deg, rgba(15, 118, 110, 0.1), rgba(255, 255, 255, 0.9) 70%); border-color: rgba(15, 118, 110, 0.35); box-shadow: 0 8px 24px rgba(15, 118, 110, 0.12); }
+.yc__head { display: flex; align-items: center; justify-content: space-between; }
+.yc__head b { font-size: 18px; color: var(--v-ink); }
+.yc__tag { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--v-muted); background: rgba(15, 80, 72, 0.07); border-radius: 999px; padding: 3px 10px; }
+.yc__card--cur .yc__tag { color: #fff; background: var(--v-teal); }
+.yc__big { font-size: 30px; font-weight: 800; line-height: 1.1; color: var(--v-deep); font-variant-numeric: tabular-nums; }
+.yc__big small { font-size: 13px; font-weight: 600; color: var(--v-muted); margin-left: 8px; }
+.yc__range { font-size: 12px; color: var(--v-faint); margin-bottom: 4px; }
+.yc__vs { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px dashed var(--v-line); border-bottom: 1px dashed var(--v-line); }
+.yc__vsrow { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--v-muted); }
+.yc__vsrow > span { min-width: 74px; }
+.yc__vsrow > b { color: var(--v-ink); font-variant-numeric: tabular-nums; }
+.yc__vsrow > em { font-style: normal; font-size: 12.5px; color: var(--v-muted); font-variant-numeric: tabular-nums; }
+.yc__mini { display: flex; flex-direction: column; gap: 5px; padding-top: 8px; }
+.yc__mini > div { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.yc__mini > div > span { color: var(--v-muted); flex: 1; }
+.yc__mini > div > b { color: var(--v-ink); font-variant-numeric: tabular-nums; }
+.yc__chart { border: 1px solid var(--v-line); border-radius: 18px; background: rgba(255, 255, 255, 0.7); padding: 14px 16px 8px; }
+.yc__ct { font-weight: 700; color: var(--v-ink); margin-bottom: 4px; }
+.yc__ct small { font-weight: 500; color: var(--v-faint); margin-left: 8px; }
+
+/* dunyo xaritasi: haqiqiy mamlakat chegaralari, och mavzu */
+.wmap__svg { border-radius: 16px; border: 1px solid #d9e4f2; background: #edf3fb; }
+.wmap__sea { fill: #edf3fb; }
+.wmap__world { fill: #fff; stroke: #c3d2e6; stroke-width: 0.6px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.wmap__grat line { stroke: rgba(90, 125, 175, 0.12); stroke-dasharray: 2 3; }
+.wmap__arc { fill: none; stroke: #2f6fe4; stroke-linecap: round; transition: opacity 0.35s, stroke 0.35s; }
+.wmap__arc.top { opacity: 0.5; }
+.wmap__arc.faint { stroke: #8fb0dc; opacity: 0.22; }
+.wmap__arc.hot { opacity: 0.95; stroke: #f08a3c; }
+.wmap__arc.dim { opacity: 0.05; }
+.wmap__bubble { fill: url(#wmBub); stroke: #fff; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(37, 99, 235, 0.45)); transition: opacity 0.2s; }
+.wmap__bubble.hot { stroke: #f08a3c; filter: drop-shadow(0 0 6px rgba(240, 138, 60, 0.8)); }
+.wmap__dim { opacity: 0.3; }
+.wmap__count { font-weight: 800; fill: #0f2f63; stroke: rgba(255, 255, 255, 0.95); paint-order: stroke; pointer-events: none; letter-spacing: 0.02em; }
+.wmap__label { fill: #c2570c !important; stroke: rgba(255, 255, 255, 0.95); paint-order: stroke; }
+.wmap__home { fill: #f08a3c; stroke: #fff; stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.wmap__ring { stroke: #f08a3c; }
+.wmapw .wmap__foot { color: var(--v-muted); }
+.wmapw .wmap__top button { background: #fff; border: 1px solid #d9e4f2; color: var(--v-ink); }
+.wmapw .wmap__top button:hover, .wmapw .wmap__top button.on { background: #eaf1fd; border-color: #2f6fe4; }
+.wmapw .wmap__top button span { color: var(--v-muted); }
+.wmapw .wmap__top button i { color: #2f6fe4; }
+.wmap__dot { fill: #fff; stroke: #2f6fe4; stroke-width: 0.9px; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px rgba(47, 111, 228, 0.7)); pointer-events: none; }
+.wmap__bubble { filter: drop-shadow(0 1px 2px rgba(37, 99, 235, 0.3)); }
+@media (prefers-reduced-motion: reduce) { .wmap__dot { display: none; } }
+.wmap__tag rect { fill: rgba(255, 255, 255, 0.94); stroke: #cfdcf0; filter: drop-shadow(0 1px 2px rgba(15, 47, 99, 0.12)); }
+.wmap__tag text { font-weight: 800; fill: #0f2f63; pointer-events: none; }
+.wmap__tag .wmap__tagn { font-weight: 600; fill: #4b6a9b; }
+.wmap__tag { cursor: pointer; transition: opacity 0.2s; }
+.wmap__lead { stroke: #8fa9cf; stroke-dasharray: 2 2; fill: none; pointer-events: none; }

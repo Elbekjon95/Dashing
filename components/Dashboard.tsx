@@ -224,9 +224,6 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
             ) : <div className="vg__none">Yuklanmoqda…</div>}
           </main>
 
-          <div className="vg__foot">
-            Manba: aeroportlar maʼlumotlar bazasi (faqat oʻqish), 21 ta Oʻzbekiston aeroporti. Bugungi koʻrsatkichlarda kun va vaqt UTC boʻyicha (rahbariyatning Grafana dashboardi bilan bir xil); tarixiy tahlillarda Toshkent vaqti (UTC+5). Har bir reys aeroportda «harakat» sifatida sanaladi: ichki reys uchgan va qoʻngan aeroportda alohida hisoblanadi. Yoʻlovchilar: LDM (bortdagi) maʼlumoti, boʻlmasa roʻyxatdan oʻtganlar. Yoqilgʻi — uchish paytida bortdagi yoqilgʻi (yuklash kartasi, total_fuel); aeroportda quyilgan miqdor emas. Viloyat chegaralari: geoBoundaries (CC BY 4.0). Bugungi maʼlumot (xarita, joriy sutka, jadval) bazadan har 5 daqiqada yangilanadi, tarixiy tahlil boʻlimlari har 2 soatda.
-          </div>
         </section>
       </div>
       <div id="tip" ref={tipEl} style={{ display: tip ? "block" : "none" }}>{tip?.content}</div>

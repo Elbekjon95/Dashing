@@ -8,7 +8,6 @@ export const dynamic = "force-dynamic";
 // Ikki davrni bazadan hisoblab qaytaradi. Natija qisqa vaqt keshlanadi (bir xil soʻrov bazani qayta yuklamasin).
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY = 86_400_000;
-const MAX_DAYS = 400;
 const CACHE_MS = 5 * 60_000;
 const cache = new Map<string, { at: number; body: string }>();
 const inflight = new Map<string, Promise<string>>();
@@ -24,7 +23,6 @@ export async function GET(req: Request) {
   const from = q.get("from") || "", to = q.get("to") || "", cfrom = q.get("cfrom") || "", cto = q.get("cto") || "", ap = (q.get("ap") || "ALL").toUpperCase();
   for (const d of [from, to, cfrom, cto]) if (!DATE.test(d) || isNaN(ms(d))) return bad("Sana formati notoʻgʻri (YYYY-MM-DD)");
   if (ms(from) > ms(to) || ms(cfrom) > ms(cto)) return bad("Boshlanish sanasi tugash sanasidan keyin boʻlmasin");
-  if ((ms(to) - ms(from)) / DAY > MAX_DAYS || (ms(cto) - ms(cfrom)) / DAY > MAX_DAYS) return bad(`Davr ${MAX_DAYS} kundan uzun boʻlmasin`);
   if (ap !== "ALL" && !AIRPORTS.includes(ap)) return bad("Aeroport kodi notoʻgʻri");
 
   const key = [from, to, cfrom, cto, ap].join("|");

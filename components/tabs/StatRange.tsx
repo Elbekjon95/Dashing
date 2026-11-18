@@ -6,17 +6,17 @@ import { Delta, todayStr, useDash, useLookups } from "@/lib/dash";
 import { OY_T } from "@/lib/static";
 import { Card, DataTable, Lines, Stats, Tabs } from "../charts";
 import { ICONS } from "../UzMap";
+import YearCompare from "./YearCompare";
 
 const DAY = 86_400_000;
 const ms = (s: string) => Date.parse(s + "T00:00:00Z");
-const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
+const iso = (t: number) => (Number.isFinite(t) ? new Date(t).toISOString().slice(0, 10) : "");
 const addDays = (s: string, n: number) => iso(ms(s) + n * DAY);
-const days = (a: string, b: string) => Math.round((ms(b) - ms(a)) / DAY) + 1;
+const days = (a: string, b: string) => !Number.isFinite(ms(a)) || !Number.isFinite(ms(b)) ? 0 : Math.round((ms(b) - ms(a)) / DAY) + 1;
 const dm = (s: string) => s.slice(8, 10) + "." + s.slice(5, 7);
 const dmy = (s: string) => dm(s) + "." + s.slice(0, 4);
-const yearBack = (s: string) => { const d = new Date(ms(s)); d.setUTCFullYear(d.getUTCFullYear() - 1); return d.toISOString().slice(0, 10); };
+const yearBack = (s: string) => { if (!Number.isFinite(ms(s))) return ""; const d = new Date(ms(s)); d.setUTCFullYear(d.getUTCFullYear() - 1); return d.toISOString().slice(0, 10); };
 
-type Mode = "prev" | "yoy" | "custom";
 type Preset = { id: string; t: string; r: (today: string) => [string, string] };
 const PRESETS: Preset[] = [
   { id: "bugun", t: "Bugun", r: (t) => [t, t] },
@@ -24,7 +24,7 @@ const PRESETS: Preset[] = [
   { id: "7", t: "7 kun", r: (t) => [addDays(t, -6), t] },
   { id: "30", t: "30 kun", r: (t) => [addDays(t, -29), t] },
   { id: "oy", t: "Joriy oy", r: (t) => [t.slice(0, 8) + "01", t] },
-  { id: "ooy", t: "Oʻtgan oy", r: (t) => { const f = new Date(ms(t.slice(0, 8) + "01")); f.setUTCMonth(f.getUTCMonth() - 1); const from = f.toISOString().slice(0, 10); return [from, addDays(t.slice(0, 8) + "01", -1)]; } },
+  { id: "ooy", t: "Oʻtgan oy", r: (t) => { const f = new Date(ms(t.slice(0, 8) + "01")); f.setUTCMonth(f.getUTCMonth() - 1); const from = iso(f.getTime()); return [from, addDays(t.slice(0, 8) + "01", -1)]; } },
   { id: "yil", t: "Yil boshidan", r: (t) => [t.slice(0, 4) + "-01-01", t] },
   { id: "oyil", t: "Oʻtgan yil", r: (t) => [(+t.slice(0, 4) - 1) + "-01-01", (+t.slice(0, 4) - 1) + "-12-31"] },
 ];
@@ -38,9 +38,6 @@ export default function StatRange() {
   const [preset, setPreset] = useState("30");
   const [from, setFrom] = useState(() => addDays(today, -29));
   const [to, setTo] = useState(today);
-  const [mode, setMode] = useState<Mode>("prev");
-  const [cf, setCf] = useState(() => addDays(today, -59));
-  const [ct, setCt] = useState(() => addDays(today, -30));
   const [metric, setMetric] = useState<"baj" | "pax">("baj");
   const [res, setRes] = useState<Res | null>(null);
   const [done, setDone] = useState<{ from: string; to: string; cf: string; ct: string } | null>(null); // natija qaysi davr uchun hisoblangan
@@ -50,19 +47,26 @@ export default function StatRange() {
 
   // solishtiriladigan davr
   const cmp = useMemo<[string, string]>(() => {
-    if (mode === "custom") return [cf, ct];
-    if (mode === "yoy") return [yearBack(from), yearBack(to)];
+    // taqvim bo'yicha mos davr: yil boshidan → o'tgan yilning shu sanasigacha; oy boshidan → o'tgan oyning shu kunigacha
+    if (Number.isFinite(ms(from)) && Number.isFinite(ms(to))) {
+      if (from.slice(5) === "01-01" && from.slice(0, 4) === to.slice(0, 4)) return [yearBack(from), yearBack(to)];
+      if (from.slice(8) === "01" && from.slice(0, 7) === to.slice(0, 7)) {
+        const pm = new Date(ms(from)); pm.setUTCMonth(pm.getUTCMonth() - 1);
+        const pFrom = iso(pm.getTime()), pLast = addDays(from, -1);
+        const pTo = Math.min(+to.slice(8), +pLast.slice(8));
+        return [pFrom, pLast.slice(0, 8) + String(pTo).padStart(2, "0")];
+      }
+    }
     const n = Math.max(1, days(from, to));
     return [addDays(from, -n), addDays(from, -1)];
-  }, [mode, from, to, cf, ct]);
+  }, [from, to]);
   const valid = from >= "2000-01-01" && cmp[0] >= "2000-01-01" && /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to) && ms(from) <= ms(to) && /^\d{4}-\d{2}-\d{2}$/.test(cmp[0]) && /^\d{4}-\d{2}-\d{2}$/.test(cmp[1]) && ms(cmp[0]) <= ms(cmp[1]);
-  const tooLong = valid && (days(from, to) > 400 || days(cmp[0], cmp[1]) > 400);
 
   // har 5 daqiqada qayta hisoblash (joriy davr bugunni oʻz ichiga olsa, raqamlar oʻsib boradi)
   useEffect(() => { const id = setInterval(() => setTick((x) => x + 1), 5 * 60_000); return () => clearInterval(id); }, []);
 
   useEffect(() => {
-    if (!valid || tooLong) return;
+    if (!valid) return;
     const ac = new AbortController();
     const h = setTimeout(async () => {
       setLoading(true); setErr("");
@@ -79,13 +83,13 @@ export default function StatRange() {
       if (!ac.signal.aborted) setLoading(false);
     }, 350);
     return () => { clearTimeout(h); ac.abort(); };
-  }, [valid, tooLong, from, to, cmp, S.ap, tick]);
+  }, [valid, from, to, cmp, S.ap, tick]);
 
   const pick = (p: Preset) => { const [a, b] = p.r(today); setPreset(p.id); setFrom(a); setTo(b); };
   const a = res?.a, b = res?.b;
   const nA = days(from, to), nB = days(cmp[0], cmp[1]);
   const dn = done || { from, to, cf: cmp[0], ct: cmp[1] };
-  const rA = Math.min(400, Math.max(1, days(dn.from, dn.to))), rB = Math.min(400, Math.max(1, days(dn.cf, dn.ct)));
+  const rA = Math.max(1, days(dn.from, dn.to)), rB = Math.max(1, days(dn.cf, dn.ct));
   const otp = (x: any) => (x && x.ms ? (x.ot / x.ms) * 100 : null);
   const t = (x: any, k: string) => T((x?.[k] || 0));
 
@@ -130,31 +134,19 @@ export default function StatRange() {
             {PRESETS.map((p) => <button key={p.id} type="button" className={p.id === preset ? "on" : ""} onClick={() => pick(p)}>{p.t}</button>)}
           </div>
           <div className="rng__row">
-            <label>Boshlanishi<input type="date" value={from} max={to} onChange={(e) => { setPreset(""); setFrom(e.target.value); }} /></label>
-            <label>Tugashi<input type="date" value={to} min={from} max={today} onChange={(e) => { setPreset(""); setTo(e.target.value); }} /></label>
-            <label>Solishtirish
-              <select value={mode} onChange={(e) => setMode(e.target.value as Mode)}>
-                <option value="prev">Oldingi teng davr</option>
-                <option value="yoy">Oʻtgan yilning shu davri</option>
-                <option value="custom">Maxsus davr</option>
-              </select>
-            </label>
-            {mode === "custom" ? (
-              <>
-                <label>Solishtirish: dan<input type="date" value={cf} max={ct} onChange={(e) => setCf(e.target.value)} /></label>
-                <label>gacha<input type="date" value={ct} min={cf} onChange={(e) => setCt(e.target.value)} /></label>
-              </>
-            ) : null}
+            <label>Boshlanishi<input type="date" value={from} max={to} onChange={(e) => { if (!e.target.value) return; setPreset(""); setFrom(e.target.value); }} /></label>
+            <label>Tugashi<input type="date" value={to} min={from} max={today} onChange={(e) => { if (!e.target.value) return; setPreset(""); setTo(e.target.value); }} /></label>
           </div>
           <p className="rng__sum">
-            {valid ? <><b>Joriy:</b> {dmy(from)} – {dmy(to)} ({nA} kun) &nbsp;·&nbsp; <b>Solishtirish:</b> {dmy(cmp[0])} – {dmy(cmp[1])} ({nB} kun)</> : "Sanalarni toʻgʻri tanlang"}
+            {valid ? <><b>Joriy:</b> {dmy(from)} – {dmy(to)} ({nA} kun{to >= today ? ", bugun kiradi — kun tugallanmagan" : ""}) &nbsp;·&nbsp; <b>Solishtirish:</b> {dmy(cmp[0])} – {dmy(cmp[1])} ({nB} kun)</> : "Sanalarni toʻgʻri tanlang"}
             {S.ap !== "ALL" ? <> &nbsp;·&nbsp; <b>Aeroport:</b> {apLabel(S.ap)}</> : null}
             {nA !== nB && valid ? <span className="rng__warn"> · davrlar uzunligi har xil ({nA} va {nB} kun)</span> : null}
           </p>
-          {tooLong ? <p className="rng__err">Davr 400 kundan uzun boʻlmasin.</p> : null}
           {err ? <p className="rng__err">{err}</p> : null}
         </div>
       </Card>
+
+      <YearCompare />
 
       {!res && !err ? <div className="vg__none">{loading ? "Bazadan hisoblanmoqda…" : "Davr tanlang"}</div> : null}
 
