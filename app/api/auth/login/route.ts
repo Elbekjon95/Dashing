@@ -1,4 +1,4 @@
-import { authConfigured, clearFails, ipOf, isHttps, makeToken, recordFail, sessionCookie, tooMany, verifyPassword } from "@/lib/auth";
+import { authConfigured, clearFails, ipOf, isHttps, makeToken, recordFail, sameOrigin, sessionCookie, tooMany, verifyPassword } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +7,7 @@ const json = (body: object, status = 200, extra: Record<string, string> = {}) =>
 
 export async function POST(req: Request) {
   if (!authConfigured()) return json({ error: "not_configured" }, 503);
+  if (!sameOrigin(req)) return json({ error: "forbidden" }, 403);
   const ip = ipOf(req);
   if (tooMany(ip)) return json({ error: "too_many" }, 429);
 

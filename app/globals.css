@@ -506,3 +506,25 @@ body { background: var(--page); }
 .login__card button[type="submit"] { border: 0; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 700; background: var(--v-deep); color: #fff; margin-top: 4px; }
 .login__card button[type="submit"]:hover:not(:disabled) { background: #0f766e; }
 .login__card button[type="submit"]:disabled { opacity: 0.6; cursor: default; }
+
+/* ---- admin: foydalanuvchilarni boshqarish */
+.adminbtn:hover { background: #e6f4f1; color: var(--v-deep); border-color: #9fd3c9; }
+.adm { align-items: start; }
+.adm__card { width: min(860px, 100%); margin-top: 40px; background: rgba(255, 255, 255, 0.96); border-radius: 22px; padding: 26px 28px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; gap: 14px; }
+.adm__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.adm__head h1 { margin: 0; font-size: 24px; }
+.adm__back { font-size: 13px; font-weight: 650; color: var(--v-deep); text-decoration: none; }
+.adm__add { display: flex; gap: 8px; flex-wrap: wrap; }
+.adm__add input, .adm__add select { flex: 1 1 150px; border: 1px solid var(--v-line); border-radius: 12px; padding: 10px 12px; font-size: 14px; background: #fff; color: var(--v-ink); }
+.adm__add button { border: 0; border-radius: 12px; padding: 10px 18px; font-weight: 700; background: var(--v-deep); color: #fff; }
+.adm__add button:disabled { opacity: 0.6; }
+.adm__ok { margin: 0; padding: 9px 12px; border-radius: 10px; background: #e6f4f1; color: #0f766e; font-size: 13px; font-weight: 600; }
+.adm__table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.adm__table th { text-align: left; font-size: 12px; color: var(--v-muted); font-weight: 650; padding: 6px 8px; border-bottom: 1px solid var(--v-line); }
+.adm__table td { padding: 10px 8px; border-bottom: 1px solid var(--v-line); vertical-align: middle; }
+.adm__me { color: var(--v-muted); font-size: 12px; }
+.adm__act { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.adm__act button { border: 1px solid var(--v-line); background: #fff; border-radius: 9px; padding: 5px 10px; font-size: 12px; font-weight: 600; color: var(--v-ink); }
+.adm__act button:hover:not(:disabled) { background: #f3f6f6; }
+.adm__act button:disabled { opacity: 0.4; cursor: default; }
+.adm__act .adm__del:hover:not(:disabled) { background: #fdeceb; color: #b91c1c; border-color: #f0b7b3; }

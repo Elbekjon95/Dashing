@@ -43,3 +43,6 @@ next-env.d.ts
 # server loglari
 /logs/
 *.log
+
+# foydalanuvchilar ombori (parol xeshlari): GitHub ga tushmasin
+/data/

@@ -1,9 +1,12 @@
-// Avtorizatsiya: foydalanuvchi/parol (scrypt bilan xeshlangan) + imzolangan HttpOnly sessiya cookie.
+// Avtorizatsiya: foydalanuvchi/parol (scrypt bilan xeshlangan, lib/users.ts faylida) + imzolangan HttpOnly sessiya cookie.
 // Sozlash (.env.local):
-//   DASH_USERS=admin:<salt>:<hash>,boshqa:<salt>:<hash>   — `node scripts/make-user.mjs <login> <parol>` shu qatorni chiqaradi
-//   DASH_SESSION_SECRET=<uzun tasodifiy matn>               — cookie imzosi uchun (kamida 32 belgi)
-// Sozlanmagan boʻlsa — hech kim kira olmaydi (xavfsiz tomonga yopiq).
-import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+//   DASH_SESSION_SECRET=<uzun tasodifiy matn>   — cookie imzosi uchun (kamida 32 belgi)
+// Foydalanuvchilar birinchi kirishda yaratiladi: birinchi roʻyxatdan oʻtgan — admin, qolganlarini admin qoʻshadi.
+// DASH_SESSION_SECRET sozlanmagan boʻlsa — hech kim kira olmaydi (xavfsiz tomonga yopiq).
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { getUser, type Role } from "./users";
+
+export { verifyPassword } from "./users";
 
 export const COOKIE = "dash_session";
 const SHORT_S = 12 * 3600;       // oddiy sessiya: 12 soat
@@ -12,30 +15,7 @@ const LONG_S = 30 * 24 * 3600;   // «meni eslab qol»: 30 kun
 const env = (k: string) => (process.env[k] ?? "").trim();
 const secret = () => env("DASH_SESSION_SECRET");
 
-function users(): Record<string, { salt: string; hash: string }> {
-  const out: Record<string, { salt: string; hash: string }> = {};
-  for (const part of env("DASH_USERS").split(",")) {
-    const [u, salt, hash] = part.trim().split(":");
-    if (u && salt && hash) out[u.toLowerCase()] = { salt, hash };
-  }
-  return out;
-}
-
-export const authConfigured = () => Object.keys(users()).length > 0 && secret().length >= 32;
-
-export function hashPassword(password: string, salt = randomBytes(16).toString("hex")) {
-  return { salt, hash: scryptSync(password, salt, 32).toString("hex") };
-}
-
-const DUMMY = { salt: "00".repeat(16), hash: "00".repeat(32) };
-export function verifyPassword(user: string, password: string): boolean {
-  const rec = users()[user.trim().toLowerCase()];
-  const r = rec || DUMMY; // foydalanuvchi yoʻq boʻlsa ham bir xil vaqt sarflanadi
-  const got = scryptSync(password, r.salt, 32);
-  const want = Buffer.from(r.hash, "hex");
-  const ok = got.length === want.length && timingSafeEqual(got, want);
-  return !!rec && ok;
-}
+export const authConfigured = () => secret().length >= 32;
 
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
 const sign = (data: string) => createHmac("sha256", secret()).update(data).digest("base64url");
@@ -46,7 +26,8 @@ export function makeToken(user: string, remember: boolean) {
   return { token: body + "." + sign(body), maxAge: remember ? LONG_S : SHORT_S };
 }
 
-export function verifyToken(token: string | undefined | null): { user: string } | null {
+export type Session = { user: string; role: Role };
+export function verifyToken(token: string | undefined | null): Session | null {
   if (!token || !secret()) return null;
   const [body, sig] = token.split(".");
   if (!body || !sig) return null;
@@ -56,8 +37,9 @@ export function verifyToken(token: string | undefined | null): { user: string } 
   try {
     const p = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
     if (!p.u || !p.exp || p.exp < Date.now() / 1000) return null;
-    if (!users()[p.u]) return null; // oʻchirilgan foydalanuvchining sessiyasi ham bekor
-    return { user: p.u };
+    const u = getUser(p.u); // oʻchirilgan foydalanuvchining sessiyasi bekor; rol har safar yangidan olinadi
+    if (!u) return null;
+    return { user: u.username, role: u.role };
   } catch {
     return null;
   }
@@ -78,6 +60,22 @@ export const sessionOf = (req: Request) => verifyToken(cookieOf(req));
 export function requireAuth(req: Request): Response | null {
   if (sessionOf(req)) return null;
   return Response.json({ error: "Avtorizatsiya talab qilinadi" }, { status: 401, headers: { "cache-control": "no-store" } });
+}
+
+/** Faqat admin uchun: sessiya yoʻq — 401, admin emas — 403; boʻlmasa sessiya qaytadi. */
+export function requireAdmin(req: Request): { res: Response } | { session: Session } {
+  const noStore = { "cache-control": "no-store" };
+  const s = sessionOf(req);
+  if (!s) return { res: Response.json({ error: "Avtorizatsiya talab qilinadi" }, { status: 401, headers: noStore }) };
+  if (s.role !== "admin") return { res: Response.json({ error: "forbidden" }, { status: 403, headers: noStore }) };
+  return { session: s };
+}
+
+/** CSRF: brauzer Origin yuborgan boʻlsa, u shu serverniki boʻlishi shart. */
+export function sameOrigin(req: Request) {
+  const o = req.headers.get("origin");
+  if (!o) return true;
+  try { return new URL(o).host === (req.headers.get("x-forwarded-host") || req.headers.get("host") || new URL(req.url).host); } catch { return false; }
 }
 
 export function isHttps(req: Request) {

@@ -44,7 +44,7 @@ function Defs() {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
   const [D, setD] = useState<DashData | null>(null);
   const [loadErr, setLoadErr] = useState(false);
   const [S, setS] = useState<DashState>(DEFAULT_STATE);
@@ -185,6 +185,11 @@ export default function Dashboard() {
             </nav>
             <div className="vg__bar-right">
               <LangSwitch />
+              {isAdmin ? (
+                <a className="logoutbtn adminbtn" href="/admin" title="Foydalanuvchilar" aria-label="Foydalanuvchilar">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                </a>
+              ) : null}
               <button type="button" className="logoutbtn" title="Chiqish" aria-label="Chiqish" onClick={logout}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></svg>
               </button>
