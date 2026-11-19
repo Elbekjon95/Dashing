@@ -8,7 +8,14 @@ f AS (
          fl.id, fl.base_airport AS ap, fl.trans_type AS tt, coalesce(fl.aircompany, '-') AS ak,
          fl.planned AS sch,
          fl.factual AS fct,
-         coalesce(fl.is_canceled, 0) = 1 AS bekor
+         coalesce(fl.is_canceled, 0) = 1 AS bekor,
+         -- reys turi (service_type): rp = muntazam yoʻlovchi (J, G, Q), rc = muntazam yuk/pochta (F, A, M, R),
+         -- cp = charter yoʻlovchi (C, O), cc = charter yuk/pochta (H, L), bz = biznes/VIP/umumiy aviatsiya (N, E, D), ot = boshqa
+         CASE WHEN upper(trim(fl.service_type)) IN ('J','G','Q') THEN 'rp'
+              WHEN upper(trim(fl.service_type)) IN ('F','A','M','R') THEN 'rc'
+              WHEN upper(trim(fl.service_type)) IN ('C','O') THEN 'cp'
+              WHEN upper(trim(fl.service_type)) IN ('H','L') THEN 'cc'
+              WHEN upper(trim(fl.service_type)) IN ('N','E','D') THEN 'bz' ELSE 'ot' END AS tp
     FROM flights fl, p
    WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','TVT','SRS','COH','OQN','MOK','OMN','AFS','CHI','RBZ','IYO')
      AND coalesce(fl.is_removed, 0) = 0
@@ -34,9 +41,9 @@ h AS (
          kun >= (yb - interval '1 year')::date AND kun < (bugun - interval '1 year')::date AS ytdo
     FROM g
 )
-SELECT coalesce(json_agg(t ORDER BY t.ap, t.ak), '[]'::json)
+SELECT coalesce(json_agg(t ORDER BY t.ap, t.ak, t.tp), '[]'::json)
   FROM (
-    SELECT ap, ak,
+    SELECT ap, ak, tp,
            count(*) FILTER (WHERE d30 AND ok)              AS r_d30,
            coalesce(sum(pax) FILTER (WHERE d30 AND ok), 0) AS p_d30,
            count(*) FILTER (WHERE d30 AND ok AND tt = 1 AND kech > 15) AS k_d30,
@@ -52,6 +59,6 @@ SELECT coalesce(json_agg(t ORDER BY t.ap, t.ak), '[]'::json)
            count(*) FILTER (WHERE ytdo AND ok)              AS r_ytdo,
            coalesce(sum(pax) FILTER (WHERE ytdo AND ok), 0) AS p_ytdo
       FROM h
-     GROUP BY ap, ak
+     GROUP BY ap, ak, tp
     HAVING count(*) FILTER (WHERE (d30 OR ytd OR ytdo) AND ok) > 0
   ) t
