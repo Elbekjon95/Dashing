@@ -27,6 +27,7 @@ g AS (
 h AS (
   SELECT g.*,
          kun >= bugun - 30 AS d30,
+         kun >= bugun - 60 AND kun < bugun - 30 AS d30o,
          kun >= yb AS ytd,
          kun >= (yb - interval '1 year')::date AND kun < (bugun - interval '1 year')::date AS ytdo
     FROM g
@@ -36,11 +37,13 @@ SELECT coalesce(json_agg(t ORDER BY t.ap, t.bosh), '[]'::json)
     SELECT ap, bosh, min(yon) AS yon,
            count(*) FILTER (WHERE d30 AND ok)               AS r_d30,
            coalesce(sum(pax) FILTER (WHERE d30 AND ok), 0)  AS p_d30,
+           count(*) FILTER (WHERE d30o AND ok)              AS r_d30o,
+           coalesce(sum(pax) FILTER (WHERE d30o AND ok), 0) AS p_d30o,
            count(*) FILTER (WHERE ytd AND ok)               AS r_ytd,
            coalesce(sum(pax) FILTER (WHERE ytd AND ok), 0)  AS p_ytd,
            count(*) FILTER (WHERE ytdo AND ok)              AS r_ytdo,
            coalesce(sum(pax) FILTER (WHERE ytdo AND ok), 0) AS p_ytdo
       FROM h
      GROUP BY ap, bosh
-    HAVING count(*) FILTER (WHERE (d30 OR ytd OR ytdo) AND ok) > 0
+    HAVING count(*) FILTER (WHERE (d30 OR d30o OR ytd OR ytdo) AND ok) > 0
   ) t

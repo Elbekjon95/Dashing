@@ -11,23 +11,24 @@ export default function Yon() {
   const { D, S } = useDash();
   const { placeName, country } = useLookups();
   const selAp = useSelAp();
-  const p = S.davr, dn = davrNom(p);
+  const p = S.davr, dn = davrNom(p), pk = p === "ytd" ? "ytdo" : "d30o"; // oldingi davr: yil boshidan → oʻtgan yil; 30 kun → oldingi 30 kun
 
   const g = useMemo(() => {
     const byB: Record<string, any> = {}, byY: Record<string, any> = {}, byC: Record<string, any> = {}, pairs: Record<string, any> = {};
     selAp(D.yonalishlar || []).forEach((r: any) => {
-      const o = (byB[r.bosh] = byB[r.bosh] || { b: r.bosh, yon: r.yon, r: 0, p: 0, po: 0 });
-      o.r += r["r_" + p]; o.p += r["p_" + p]; o.po += r.p_ytdo;
-      const y = (byY[r.yon] = byY[r.yon] || { r: 0, p: 0 });
-      y.r += r["r_" + p]; y.p += r["p_" + p];
-      if (r["p_" + p] > 0) { const key = r.ap + ">" + r.bosh; (pairs[key] = pairs[key] || { from: r.ap, to: r.bosh, n: 0 }).n += r["p_" + p]; }
+      const o = (byB[r.bosh] = byB[r.bosh] || { b: r.bosh, yon: r.yon, r: 0, p: 0, po: 0, pp: 0 });
+      o.r += r["r_" + p]; o.p += r["p_" + p]; o.po += r.p_ytdo; o.pp += r["p_" + pk] || 0;
+      const y = (byY[r.yon] = byY[r.yon] || { r: 0, p: 0, pp: 0, rp: 0 });
+      y.r += r["r_" + p]; y.p += r["p_" + p]; y.pp += r["p_" + pk] || 0; y.rp += r["r_" + pk] || 0;
+      if (r["p_" + p] > 0) { const key = r.ap + ">" + r.bosh; const o = (pairs[key] = pairs[key] || { from: r.ap, to: r.bosh, n: 0, r: 0 }); o.n += r["p_" + p]; o.r += r["r_" + p]; }
     });
+    const prevDest = Object.keys(byB).filter((k) => byB[k].pp > 0);
     const list: any[] = Object.keys(byB).map((k) => byB[k]).filter((x) => x.r > 0).sort((a, b) => b.p - a.p || b.r - a.r);
     list.forEach((x) => { const c = country(x.b); const o = (byC[c] = byC[c] || { c, r: 0, p: 0 }); o.r += x.r; o.p += x.p; });
-    return { list, byY, byC, prs: Object.keys(pairs).map((k) => pairs[k]) as { from: string; to: string; n: number }[] };
+    return { list, byY, byC, prevDest: prevDest.length, prs: Object.keys(pairs).map((k) => pairs[k]) as { from: string; to: string; n: number; r: number }[] };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [D, S.ap, p]);
-  const { list, byY, byC, prs } = g;
+  const { list, byY, byC, prs, prevDest } = g;
   const totP = sum(list, "p");
   const cl: any[] = Object.keys(byC).map((k) => byC[k]).sort((a, b) => b.p - a.p);
 
@@ -49,8 +50,8 @@ export default function Yon() {
   return (
     <>
       <Stats list={[
-        ...["MVL", "CIS", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
-        { l: "Yoʻnalishlar", v: N(list.length), s: N(Object.keys(byC).length) + " ta davlat · " + dn },
+        ...["MVL", "CIS", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
+        { l: "Yoʻnalishlar", v: N(list.length), r: prevDest ? <><Delta big cur={list.length} prev={prevDest} /> edi {N(prevDest)}</> : null, s: N(Object.keys(byC).length) + " ta davlat · " + dn },
       ]} />
       <Card title="Yoʻnalishlar xaritasi" hint={"Doira kattaligi — yoʻlovchilar soni · " + dn}
         chart={<WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "TAS" : undefined} top={10} unit="yoʻlovchi" aspect={2.6} />} />

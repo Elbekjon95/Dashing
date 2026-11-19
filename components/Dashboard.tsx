@@ -133,6 +133,18 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen?.();
   }, []);
+  // TV rejim: butun ekran + kiosk koʻrinish; Esc bilan chiqilsa oddiy koʻrinishga qaytadi
+  const tvFs = useRef(false);
+  const enterTv = useCallback(() => {
+    tvFs.current = true;
+    setKiosk(true);
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  }, []);
+  useEffect(() => {
+    const fc = () => { if (!document.fullscreenElement && tvFs.current) { tvFs.current = false; setKiosk(false); } };
+    document.addEventListener("fullscreenchange", fc);
+    return () => document.removeEventListener("fullscreenchange", fc);
+  }, []);
   useEffect(() => {
     const kd = (e: KeyboardEvent) => { if ((e.key === "f" || e.key === "F") && !/INPUT|SELECT|TEXTAREA/.test((document.activeElement as HTMLElement)?.tagName || "")) toggleFs(); };
     document.addEventListener("keydown", kd);
@@ -184,6 +196,10 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
               ))}
             </nav>
             <div className="vg__bar-right">
+              <button type="button" className="tvbtn" title="TV rejim" aria-label="TV rejim" onClick={enterTv}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="15" x="2" y="7" rx="2" /><path d="m17 2-5 5-5-5" /></svg>
+                <span>TV</span>
+              </button>
               <LangSwitch />
               {isAdmin ? (
                 <a className="logoutbtn adminbtn" href="/admin" title="Foydalanuvchilar" aria-label="Foydalanuvchilar">

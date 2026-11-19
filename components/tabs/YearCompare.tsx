@@ -47,8 +47,8 @@ export default function YearCompare() {
           get(y1 + "-01-01", y1 + "-12-31", y1 + "-01-01", y1 + "-12-31"),
         ]);
         setRows([
-          { year: y2, ytd: B.a, full: B.b, daily: B.kunlar.a },
-          { year: y1, ytd: A.b, full: C.a, daily: A.kunlar.b },
+          { year: y2, ytd: B.a, full: B.b, daily: B.kunlar.b },
+          { year: y1, ytd: A.b, full: C.a, daily: C.kunlar.a },
           { year: Y0, ytd: A.a, full: null, daily: A.kunlar.a },
         ]);
       } catch (e: any) {
@@ -61,7 +61,8 @@ export default function YearCompare() {
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return null;
   const cargo = (x: any) => (x ? T((x.yuk || 0) + (x.poc || 0)) : null);
-  const NM = Number(today.slice(5, 7));
+  const NM = 12; // har doim 12 oy; kelajak oylar 0 boʻlib turadi, maʼlumot paydo boʻlishi bilan toʻlib boradi
+  const curM = Number(today.slice(5, 7)) - 1;
   const byMonth = (y: Y) => {
     const out = Array.from({ length: NM }, () => 0);
     y.daily.forEach((r: any) => { const m = +String(r[0]).slice(5, 7) - 1; if (m >= 0 && m < NM) out[m] += (metric === "baj" ? r[1] : r[2]) || 0; });
@@ -72,11 +73,11 @@ export default function YearCompare() {
   const [r2, r1, r0] = rows || [];
   const upTo = dm(today);
   const mLabels = OY.slice(0, NM);
-  const mTips = OY_T.slice(0, NM).map((m, i) => (i === NM - 1 ? m + " (" + "01–" + upTo.slice(0, 2) + " gacha)" : m));
+  const mTips = OY_T.slice(0, NM).map((m, i) => (i === curM ? m + " (01–" + upTo.slice(0, 2) + " gacha)" : m));
 
   return (
     <Card title={<span className="rng__ttl">{ICONS.calendar}Yillar boʻyicha solishtirish</span>}
-      hint={`Har yil 1-yanvardan boshlab toʻplangan jami; barcha yillar ${upTo} sanagacha kesilgan. Hozirgi yil oʻtgan yillarning aynan shu paytiga nisbatan oldinda yoki ortda ekanini koʻrsatadi.`}
+      hint={`Oʻtgan yillar — toʻliq yil boʻyicha, joriy yil — 1-yanvardan ${upTo} sanagacha. Joriy yilning oʻtgan yillar bilan solishtirishi aynan shu sanagacha hisoblanadi.`}
       tools={<Tabs options={[["pax", "Yoʻlovchilar"], ["baj", "Reyslar"]]} val={metric} onPick={(v) => setMetric(v)} />}>
       {err ? <p className="rng__err">{err}</p> : null}
       {!rows && !err ? <div className="vg__none">{loading ? "Bazadan hisoblanmoqda…" : ""}</div> : null}
@@ -86,27 +87,28 @@ export default function YearCompare() {
             {[r2, r1, r0].map((r, i) => {
               const cur = r.year === r0.year, prev = i > 0 ? [r2, r1, r0][i - 1] : null;
               const v = (x: any) => (x ? x[key] : 0);
+              const cmp = (y: Y) => (cur ? y.ytd : y.full); // joriy yilning oʻzgarishi — oʻtgan yilning shu sanagacha boʻlgan qiymatiga nisbatan
+              const src = (y: Y) => (y.year === r0.year ? y.ytd : y.full); // oʻtgan yillar — toʻliq yil, joriy yil — hozirgacha
               const diff = (c: number, p: number) => (c - p >= 0 ? "+" : "−") + N(Math.abs(c - p));
               const stats: [string, string, any, any][] = [
-                ["Reyslar", N(r.ytd.baj), r.ytd.baj, prev?.ytd.baj],
-                ["Yoʻlovchilar", N(r.ytd.pax), r.ytd.pax, prev?.ytd.pax],
-                ["Yuk, t", N1(cargo(r.ytd)), cargo(r.ytd), prev ? cargo(prev.ytd) : null],
+                ["Reyslar", N(src(r).baj), src(r).baj, prev ? cmp(prev).baj : null],
+                ["Yoʻlovchilar", N(src(r).pax), src(r).pax, prev ? cmp(prev).pax : null],
+                ["Yuk, t", N1(cargo(src(r))), cargo(src(r)), prev ? cargo(cmp(prev)) : null],
               ];
               return (
                 <div key={r.year} className={"yc__card" + (cur ? " yc__card--cur" : "")}>
-                  <div className="yc__head"><b>{r.year}</b><span className="yc__tag">{cur ? "Hozircha" : "Yil boshidan"}</span></div>
-                  <div className="yc__big">{N(v(r.ytd))}<small>{word}</small></div>
-                  <div className="yc__range">{"01.01 – " + upTo}</div>
+                  <div className="yc__head"><b>{r.year}</b><span className="yc__tag">{cur ? "Hozircha" : "Butun yil"}</span></div>
+                  <div className="yc__big">{N(v(src(r)))}<small>{word}</small></div>
+                  <div className="yc__range">{cur ? "01.01 – " + upTo : "01.01 – 31.12"}</div>
                   {cur ? (
                     <div className="yc__vs">
                       {[r1, r2].map((o) => (
-                        <div key={o.year} className="yc__vsrow"><span>{"vs " + o.year}</span><Delta big cur={v(r0.ytd)} prev={v(o.ytd)} /><em>{diff(v(r0.ytd), v(o.ytd))}</em></div>
+                        <div key={o.year} className="yc__vsrow"><span>{"vs " + o.year + " (01.01 – " + upTo + ")"}</span><Delta big cur={v(r0.ytd)} prev={v(o.ytd)} /><em>{diff(v(r0.ytd), v(o.ytd))}</em></div>
                       ))}
                     </div>
                   ) : (
                     <div className="yc__vs">
-                      <div className="yc__vsrow"><span>Butun yil</span><b>{N(v(r.full))}</b></div>
-                      {prev ? <div className="yc__vsrow"><span>{"vs " + prev.year}</span><Delta big cur={v(r.ytd)} prev={v(prev.ytd)} /></div> : null}
+                      {prev ? <div className="yc__vsrow"><span>{"vs " + prev.year}</span><Delta big cur={v(r.full)} prev={v(prev.full)} /></div> : null}
                     </div>
                   )}
                   <div className="yc__mini">
@@ -119,7 +121,7 @@ export default function YearCompare() {
             })}
           </div>
           <div className="yc__chart">
-            <div className="yc__ct">Oylar boʻyicha <small>{"01.01 – " + upTo + ", har yil uchun"}</small></div>
+            <div className="yc__ct">Oylar boʻyicha <small>{"har yil uchun · " + r0.year + " — " + upTo + " gacha"}</small></div>
             <Bars labels={mLabels} tips={mTips} fmt={N} fmtAxis={(v) => (v >= 1e6 ? N1(v / 1e6) + " mln" : v >= 1e3 ? N(v / 1e3) + " ming" : N(v))} h={290} labelW={52} series={[
               { name: String(r2.year), fill: "grey", values: byMonth(r2) },
               { name: String(r1.year), fill: "orange", values: byMonth(r1) },

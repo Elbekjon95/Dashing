@@ -6,6 +6,7 @@ import { N, nf1v, sum, T, iso } from "@/lib/format";
 import { ChevL, ChevR, Delta, PauseIcon, PlayIcon, PlaneIcon, todayStr, useDash, useLookups } from "@/lib/dash";
 import { AP_REGION, METRICS, NAMED, SHOW_METRIC, SLIDE_MS, UZ_PATHS, addM, dayLabel, dirOf, mDom, mVal, metricsAll, metricsOf, monthName, periods, shade, topRows, tourCodes, unitOf, uzProject, xkIndex, ymStr, zeroM, type YM } from "@/lib/uzcalc";
 
+const MAP_HIDE = new Set(["CHI", "TVT"]); // xaritada koʻrsatilmaydi
 const showV = (v: number, k: string) => ((k === "cargo" || k === "fuel") && v < 100 ? nf1v.format(v) : N(v));
 
 function hashParam(k: string) {
@@ -303,7 +304,7 @@ export default function UzMap() {
 
   const k = metric, unit = unitOf(k), pr = useMemo(() => periods(D, ym, daily), [D, ym, daily]);
   const aps: Ap[] = useMemo(
-    () => AP_LIST.map((a) => ({ code: a, cur: metricsOf(D, a, pr.from, pr.to), cmp: metricsOf(D, a, pr.cfrom, pr.cto, pr.ckey) })).filter((a) => COORDS[a.code]), // reysi yoʻq aeroportlar ham xaritada koʻrinadi
+    () => AP_LIST.map((a) => ({ code: a, cur: metricsOf(D, a, pr.from, pr.to), cmp: metricsOf(D, a, pr.cfrom, pr.cto, pr.ckey) })).filter((a) => COORDS[a.code] && !MAP_HIDE.has(a.code)), // reysi yoʻq aeroportlar ham xaritada koʻrinadi
     [D, pr],
   );
   const max = Math.max(0, ...aps.map((a) => mVal(a.cur, k)));

@@ -40,7 +40,7 @@ export default function Bugun() {
   // kunlar
   const kl = selAp(D.kunlik || []), byD: Record<string, number> = {}, today = todayStr(D);
   kl.forEach((r) => { if (r.kun < today) byD[r.kun] = (byD[r.kun] || 0) + r.baj; });
-  const days = Object.keys(byD).sort().slice(-14), dv = days.map((d) => byD[d]);
+  const days = Object.keys(byD).sort().slice(-7), dv = days.map((d) => byD[d]);
 
   // yoʻnalish / aviakompaniya
   const dests: Record<string, number> = {}, aks: Record<string, number> = {};
@@ -111,12 +111,12 @@ export default function Bugun() {
         <Card title="Soatlar boʻyicha harakat" hint="Bugun har soatda (UTC) nechta qoʻnish va uchish (rejadagi, bekorlarsiz)"
           chart={<Bars labels={hrs} tips={hrTips} series={[{ name: "Qoʻnishlar", fill: "teal", values: arr }, { name: "Uchishlar", fill: "orange", values: dep }]} fmt={N} h={230} labelW={34} />}
           table={<DataTable scroll rows={hrs.map((_, i) => ({ h: hrTips[i], a: arr[i], d: dep[i] }))} cols={[{ h: "Soat", f: (r) => r.h }, { h: "Qoʻnish", n: true, f: (r) => N(r.a) }, { h: "Uchish", n: true, f: (r) => N(r.d) }]} />} />
-        <Card title="Kunlar boʻyicha reyslar" hint="Oxirgi 14 kun: qoʻnish va uchish birga"
+        <Card title="Kunlar boʻyicha reyslar" hint="Oxirgi 7 kun: qoʻnish va uchish birga"
           chart={
             <>
               <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "-2px 0 6px" }}>
                 <strong style={{ fontSize: 30, fontWeight: 650, letterSpacing: "-.02em" }}>{N(sum(dv, (v) => v))}</strong>
-                <span style={{ color: "#5f7a78", fontSize: 12.5 }}>{"reys 14 kunda · kecha " + N(dv[dv.length - 1])}</span>
+                <span style={{ color: "#5f7a78", fontSize: 12.5 }}>{"reys 7 kunda · kecha " + N(dv[dv.length - 1])}</span>
               </div>
               <Lines labels={days.map((d) => d.slice(8, 10) + "." + d.slice(5, 7))} tips={days} series={[{ name: "Reyslar", fill: "teal", values: dv, area: true, dots: true }]} fmt={N} h={196} labelW={44} />
             </>

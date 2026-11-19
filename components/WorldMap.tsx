@@ -6,7 +6,7 @@ import { useLookups } from "@/lib/dash";
 import { mapBox, proj } from "@/lib/uzcalc";
 import { useWidth } from "./charts";
 
-type Pair = { from: string; to: string; n: number };
+type Pair = { from: string; to: string; n: number; r?: number };
 const ARCS = 12; // doimiy koʻrinadigan chiziqlar soni (eng katta yoʻnalishlar)
 const LABELS = 8; // yozuv qoʻyiladigan yoʻnalishlar soni
 
@@ -19,13 +19,13 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
   const eff = useMemo<Pair[]>(() => {
     if (!hub) return pairs;
     const m: Record<string, Pair> = {};
-    pairs.forEach((p) => { if (homes.indexOf(p.to) >= 0) return; const o = (m[p.to] = m[p.to] || { from: hub, to: p.to, n: 0 }); o.n += p.n; });
+    pairs.forEach((p) => { if (homes.indexOf(p.to) >= 0) return; const o = (m[p.to] = m[p.to] || { from: hub, to: p.to, n: 0, r: 0 }); o.n += p.n; o.r = (o.r || 0) + (p.r || 0); });
     return Object.keys(m).map((k) => m[k]);
   }, [pairs, hub, homes]);
 
   const g = useMemo(() => {
-    const dest: Record<string, { code: string; n: number }> = {};
-    eff.forEach((p) => { const o = (dest[p.to] = dest[p.to] || { code: p.to, n: 0 }); o.n += p.n; });
+    const dest: Record<string, { code: string; n: number; r: number }> = {};
+    eff.forEach((p) => { const o = (dest[p.to] = dest[p.to] || { code: p.to, n: 0, r: 0 }); o.n += p.n; o.r += p.r || 0; });
     const list = Object.keys(dest).map((x) => dest[x]).sort((a, b) => b.n - a.n);
     return { dest, list, mx: list.length ? list[0].n : 1 };
   }, [eff]);
@@ -139,6 +139,17 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
           );
         })}
       </svg>
+      {hot && g.dest[hot] && proj(hot) ? (() => {
+        const q = proj(hot) as [number, number], x = Math.min(Math.max((q[0] - vb[0]) / k, 110), W - 110), y = (q[1] - vb[1]) / k, d = g.dest[hot];
+        return (
+          <div className="wmap__tip" style={{ left: x, top: Math.max(y - 16, 70) }}>
+            <b>{placeName(hot)} <i>{hot}</i></b>
+            <span>{country(hot)}</span>
+            <div><em>{N(d.r)}</em> qatnov (reys)</div>
+            <div><em>{N(d.n)}</em> {unit}</div>
+          </div>
+        );
+      })() : null}
       <ul className="wmap__top">
         {topList.map((d) => (
           <li key={d.code}>
