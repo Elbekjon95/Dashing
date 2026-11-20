@@ -15,7 +15,7 @@ g AS (
     FROM flights fl
     CROSS JOIN p
     LEFT JOIN passengers ps ON ps.flight_id = fl.id
-   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO')
+   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO','CHI','TVT')
      AND coalesce(fl.is_removed, 0) = 0
      AND upper(coalesce(trim(fl.service_type), '')) <> 'W' -- harbiy reyslar hisobga olinmaydi
      AND fl.trans_type IN (1, 2)

@@ -15,7 +15,8 @@ export default function Yon() {
 
   const g = useMemo(() => {
     const byB: Record<string, any> = {}, byY: Record<string, any> = {}, byC: Record<string, any> = {}, pairs: Record<string, any> = {};
-    selAp(D.yonalishlar || []).forEach((r: any) => {
+    selAp(D.yonalishlar || []).forEach((r0: any) => {
+      const r = r0.yon === "CIS" ? { ...r0, yon: "MVL" } : r0; // MDH ham xalqaro tarkibida
       const o = (byB[r.bosh] = byB[r.bosh] || { b: r.bosh, yon: r.yon, r: 0, p: 0, po: 0, pp: 0 });
       o.r += r["r_" + p]; o.p += r["p_" + p]; o.po += r.p_ytdo; o.pp += r["p_" + pk] || 0;
       const y = (byY[r.yon] = byY[r.yon] || { r: 0, p: 0, pp: 0, rp: 0 });
@@ -48,7 +49,7 @@ export default function Yon() {
     <>
       <section className="vg__card vg__globe"><div className="bd"><WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "UZ" : undefined} top={10} unit="yoʻlovchi" fill /></div></section>
       <Stats list={[
-        ...["MVL", "CIS", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
+        ...["MVL", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
         { l: "Yoʻnalishlar", v: N(list.length), r: prevDest ? <><Delta big cur={list.length} prev={prevDest} /> edi {N(prevDest)}</> : null, s: N(Object.keys(byC).length) + " ta davlat · " + dn },
       ]} />
       <Row cls="vg__row--two">

@@ -9,7 +9,7 @@ f AS (
          fl.factual AS fct,
          coalesce(fl.is_canceled, 0) = 1 AS bekor
     FROM flights fl, p
-   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO')
+   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO','CHI','TVT')
      AND coalesce(fl.is_removed, 0) = 0
      AND upper(coalesce(trim(fl.service_type), '')) <> 'W' -- harbiy reyslar hisobga olinmaydi
      AND fl.planned >= (p.yb - interval '1 year')
@@ -19,9 +19,7 @@ f AS (
 g AS (
   SELECT f.*, f.sch::date AS kun, p.bugun, p.yb,
          (NOT f.bekor AND f.fct IS NOT NULL AND f.fct <= p.hozir) AS ok,
-         CASE WHEN coalesce(ps.ldm_pax_ad,0) + coalesce(ps.ldm_pax_ch,0) + coalesce(ps.ldm_pax_in,0) > 0
-              THEN coalesce(ps.ldm_pax_ad,0) + coalesce(ps.ldm_pax_ch,0) + coalesce(ps.ldm_pax_in,0)
-              ELSE coalesce(ps.pax_reg_ad,0) + coalesce(ps.pax_reg_ch,0) + coalesce(ps.pax_reg_in,0) END AS pax
+         coalesce(ps.ldm_pax_ad,0) + coalesce(ps.ldm_pax_ch,0) AS pax
     FROM f CROSS JOIN p
     LEFT JOIN passengers ps ON ps.flight_id = f.id
 ),
@@ -37,13 +35,13 @@ SELECT coalesce(json_agg(t ORDER BY t.ap, t.bosh), '[]'::json)
   FROM (
     SELECT ap, bosh, min(yon) AS yon,
            count(*) FILTER (WHERE d30 AND ok)               AS r_d30,
-           coalesce(sum(pax) FILTER (WHERE d30 AND ok), 0)  AS p_d30,
+           coalesce(sum(pax) FILTER (WHERE d30 AND NOT bekor), 0)  AS p_d30,
            count(*) FILTER (WHERE d30o AND ok)              AS r_d30o,
-           coalesce(sum(pax) FILTER (WHERE d30o AND ok), 0) AS p_d30o,
+           coalesce(sum(pax) FILTER (WHERE d30o AND NOT bekor), 0) AS p_d30o,
            count(*) FILTER (WHERE ytd AND ok)               AS r_ytd,
-           coalesce(sum(pax) FILTER (WHERE ytd AND ok), 0)  AS p_ytd,
+           coalesce(sum(pax) FILTER (WHERE ytd AND NOT bekor), 0)  AS p_ytd,
            count(*) FILTER (WHERE ytdo AND ok)              AS r_ytdo,
-           coalesce(sum(pax) FILTER (WHERE ytdo AND ok), 0) AS p_ytdo
+           coalesce(sum(pax) FILTER (WHERE ytdo AND NOT bekor), 0) AS p_ytdo
       FROM h
      GROUP BY ap, bosh
     HAVING count(*) FILTER (WHERE (d30 OR d30o OR ytd OR ytdo) AND ok) > 0

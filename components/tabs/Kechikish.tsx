@@ -25,7 +25,9 @@ export default function Kechikish() {
     if (!c) return;
     (byK[r.kod] = byK[r.kod] || { n: 0, m: 0 }); byK[r.kod].n += c; byK[r.kod].m += mm;
     const g = dGroup(r.kod); (byG[g] = byG[g] || { n: 0, m: 0 }); byG[g].n += c; byG[g].m += mm;
-    const xs = r.xiz === "-" ? "Koʻrsatilmagan" : (D.lugat && D.lugat.ks && D.lugat.ks[r.xiz]) || r.xiz;
+    if (r.xiz === "-") return; // "Koʻrsatilmagan" xizmat ro'yxatga kiritilmaydi
+    const xs = (D.lugat && D.lugat.ks && D.lugat.ks[r.xiz]) || r.xiz;
+    if (!/[\p{L}\p{N}]/u.test(String(xs))) return; // "....." kabi mazmunsiz nomlar ham kiritilmaydi
     (byX[xs] = byX[xs] || { n: 0, m: 0 }); byX[xs].n += c; byX[xs].m += mm;
   });
   const items = (o: typeof byK, lab: (k: string) => string, sub?: (k: string) => string): RankItem[] =>

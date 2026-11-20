@@ -12,7 +12,7 @@ f AS (
          fl.factual AS fct,
          coalesce(fl.is_canceled, 0) = 1 AS bekor
     FROM flights fl, p
-   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO')
+   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO','CHI','TVT')
      AND coalesce(fl.is_removed, 0) = 0
      AND upper(coalesce(trim(fl.service_type), '')) <> 'W' -- harbiy reyslar hisobga olinmaydi
      AND fl.planned >= (p.oy0 - interval '13 months')
@@ -21,9 +21,7 @@ f AS (
 ),
 g AS (
   SELECT f.sch::date AS kun, f.ap, f.ak, f.bosh,
-         CASE WHEN coalesce(ps.ldm_pax_ad,0) + coalesce(ps.ldm_pax_ch,0) + coalesce(ps.ldm_pax_in,0) > 0
-              THEN coalesce(ps.ldm_pax_ad,0) + coalesce(ps.ldm_pax_ch,0) + coalesce(ps.ldm_pax_in,0)
-              ELSE coalesce(ps.pax_reg_ad,0) + coalesce(ps.pax_reg_ch,0) + coalesce(ps.pax_reg_in,0) END AS pax,
+         coalesce(ps.ldm_pax_ad,0) + coalesce(ps.ldm_pax_ch,0) AS pax,
          coalesce(ps.wgt_cargo, 0) + coalesce(ps.wgt_mail, 0) AS cm,
          CASE WHEN f.tt = 1 THEN coalesce(ps.total_fuel, 0) ELSE 0 END AS yoq,
          (f.sch::date >= (p.oy0 - interval '1 month')::date AND f.sch::date < p.oy0
