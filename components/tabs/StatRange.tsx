@@ -146,7 +146,7 @@ export default function StatRange() {
         </div>
       </Card>
 
-      <YearCompare />
+      {!res ? <YearCompare /> : null}
 
       {!res && !err ? <div className="vg__none">{loading ? "Bazadan hisoblanmoqda…" : "Davr tanlang"}</div> : null}
 
@@ -163,6 +163,8 @@ export default function StatRange() {
           <Card title="Kunlar boʻyicha taqqoslash" hint="Ikkala davr kun tartibi boʻyicha ustma-ust qoʻyilgan: 1-kun 1-kun bilan, 2-kun 2-kun bilan"
             tools={<Tabs options={[["baj", "Reyslar"], ["pax", "Yoʻlovchilar"]]} val={metric} onPick={(v) => setMetric(v)} />}
             chart={L ? <Lines labels={labels} tips={tips} fmt={N} h={260} labelW={52} series={[{ name: "Joriy davr", fill: "teal", values: pad(va), area: true, dots: rA <= 45 }, { name: "Solishtirish davri", fill: "orange", values: pad(vb), w: 2, dots: false }]} /> : <div className="vg__none">Maʼlumot yoʻq</div>} />
+
+          <YearCompare />
 
           <div className="rng__grid">
             <Card title="Aeroportlar boʻyicha" hint="Reyslar va yoʻlovchilar: joriy davr va solishtirish">{two(res.ap, (k) => <><b>{k}</b><small>{apLabel(k)}</small></>, "Aeroport")}</Card>
