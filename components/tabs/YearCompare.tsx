@@ -18,13 +18,13 @@ const shiftYear = (s: string, n: number) => {
 type Y = { year: number; ytd: any; full: any; daily: any[] };
 
 export default function YearCompare() {
-  const { D, S } = useDash();
+  const { D, S, set } = useDash();
   const today = todayStr(D);
   const Y0 = +today.slice(0, 4);
   const [rows, setRows] = useState<Y[] | null>(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const [metric, setMetric] = useState<"baj" | "pax">("pax");
+  const metric = S.metr; // Reyslar / Yoʻlovchilar / Yuk — sahifadagi barcha pastki kartalar bilan umumiy
 
   useEffect(() => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return;
@@ -65,11 +65,13 @@ export default function YearCompare() {
   const curM = Number(today.slice(5, 7)) - 1;
   const byMonth = (y: Y) => {
     const out = Array.from({ length: NM }, () => 0);
-    y.daily.forEach((r: any) => { const m = +String(r[0]).slice(5, 7) - 1; if (m >= 0 && m < NM) out[m] += (metric === "baj" ? r[1] : r[2]) || 0; });
+    y.daily.forEach((r: any) => { const m = +String(r[0]).slice(5, 7) - 1; if (m >= 0 && m < NM) out[m] += (metric === "baj" ? r[1] : metric === "pax" ? r[2] : T(r[3] || 0)) || 0; });
     return out;
   };
   const key = metric === "baj" ? "baj" : "pax";
-  const word = metric === "baj" ? "reys" : "yoʻlovchi";
+  const word = metric === "baj" ? "reys" : metric === "pax" ? "yoʻlovchi" : "t yuk";
+  const mv = (x: any) => (x ? (metric === "yuk" ? cargo(x) || 0 : x[key]) : 0);
+  const mf = (n: number) => (metric === "yuk" ? N1(n) : N(n));
   const [r2, r1, r0] = rows || [];
   const upTo = dm(today);
   const mLabels = OY.slice(0, NM);
@@ -78,7 +80,7 @@ export default function YearCompare() {
   return (
     <Card title={<span className="rng__ttl">{ICONS.calendar}Yillar boʻyicha solishtirish</span>}
       hint={`Oʻtgan yillar — toʻliq yil boʻyicha, joriy yil — 1-yanvardan ${upTo} sanagacha. Joriy yilning oʻtgan yillar bilan solishtirishi aynan shu sanagacha hisoblanadi.`}
-      tools={<Tabs options={[["pax", "Yoʻlovchilar"], ["baj", "Reyslar"]]} val={metric} onPick={(v) => setMetric(v)} />}>
+      tools={<Tabs options={[["baj", "Reyslar"], ["pax", "Yoʻlovchilar"], ["yuk", "Yuk va pochta"]]} val={metric} onPick={(v) => set({ metr: v })} />}>
       {err ? <p className="rng__err">{err}</p> : null}
       {!rows && !err ? <div className="vg__none">{loading ? "Bazadan hisoblanmoqda…" : ""}</div> : null}
       {rows ? (
@@ -86,10 +88,10 @@ export default function YearCompare() {
           <div className="yc__grid">
             {[r2, r1, r0].map((r, i) => {
               const cur = r.year === r0.year, prev = i > 0 ? [r2, r1, r0][i - 1] : null;
-              const v = (x: any) => (x ? x[key] : 0);
+              const v = mv;
               const cmp = (y: Y) => (cur ? y.ytd : y.full); // joriy yilning oʻzgarishi — oʻtgan yilning shu sanagacha boʻlgan qiymatiga nisbatan
               const src = (y: Y) => (y.year === r0.year ? y.ytd : y.full); // oʻtgan yillar — toʻliq yil, joriy yil — hozirgacha
-              const diff = (c: number, p: number) => (c - p >= 0 ? "+" : "−") + N(Math.abs(c - p));
+              const diff = (c: number, p: number) => (c - p >= 0 ? "+" : "−") + mf(Math.abs(c - p));
               const stats: [string, string, any, any][] = [
                 ["Reyslar", N(src(r).baj), src(r).baj, prev ? cmp(prev).baj : null],
                 ["Yoʻlovchilar", N(src(r).pax), src(r).pax, prev ? cmp(prev).pax : null],
@@ -98,7 +100,7 @@ export default function YearCompare() {
               return (
                 <div key={r.year} className={"yc__card" + (cur ? " yc__card--cur" : "")}>
                   <div className="yc__head"><b>{r.year}</b><span className="yc__tag">{cur ? "Hozircha" : "Butun yil"}</span></div>
-                  <div className="yc__big">{N(v(src(r)))}<small>{word}</small></div>
+                  <div className="yc__big">{mf(v(src(r)))}<small>{word}</small></div>
                   <div className="yc__range">{cur ? "01.01 – " + upTo : "01.01 – 31.12"}</div>
                   {cur ? (
                     <div className="yc__vs">
@@ -122,7 +124,7 @@ export default function YearCompare() {
           </div>
           <div className="yc__chart">
             <div className="yc__ct">Oylar boʻyicha <small>{"har yil uchun · " + r0.year + " — " + upTo + " gacha"}</small></div>
-            <Bars labels={mLabels} tips={mTips} fmt={N} fmtAxis={(v) => (v >= 1e6 ? N1(v / 1e6) + " mln" : v >= 1e3 ? N(v / 1e3) + " ming" : N(v))} h={290} labelW={52} series={[
+            <Bars labels={mLabels} tips={mTips} fmt={mf} fmtAxis={(v) => (metric === "yuk" ? (v >= 1e3 ? N1(v / 1e3) + " ming" : N(v)) : v >= 1e6 ? N1(v / 1e6) + " mln" : v >= 1e3 ? N(v / 1e3) + " ming" : N(v))} h={290} labelW={52} series={[
               { name: String(r2.year), fill: "grey", values: byMonth(r2) },
               { name: String(r1.year), fill: "orange", values: byMonth(r1) },
               { name: String(r0.year), fill: "teal", values: byMonth(r0) },

@@ -2,7 +2,7 @@
 // Parametrlar: $1=joriy davr boshi, $2=oxiri, $3=solishtirish boshi, $4=oxiri (YYYY-MM-DD, UTC kuni), $5=aeroport kodi yoki 'ALL'.
 // Hisob qoidalari bugungi dashboard bilan bir xil: UTC kuni, `planned` bo'yicha, o'chirilgan va takroriy yozuvlarsiz;
 // "bajarilgan" = bekor qilinmagan va factual <= hozir; yo'lovchi = LDM bo'yicha, bo'lmasa ro'yxatdan o'tganlar.
-export const AIRPORTS = ["TAS", "SKD", "UGC", "BHK", "NMA", "FEG", "NVI", "TMJ", "NCU", "KSQ", "AZN", "TVT", "SRS", "COH", "OQN", "MOK", "OMN", "AFS", "CHI", "RBZ", "IYO"];
+export const AIRPORTS = ["TAS", "SKD", "UGC", "BHK", "NMA", "FEG", "NVI", "TMJ", "NCU", "KSQ", "AZN", "SRS", "COH", "OQN", "MOK", "OMN", "AFS", "RBZ", "IYO"];
 
 export const STAT_SQL = `
 WITH p AS (SELECT (now() AT TIME ZONE 'UTC') AS hozir, $1::date AS af, $2::date AS at, $3::date AS bf, $4::date AS bt, $5::text AS ap),
@@ -16,6 +16,7 @@ f AS (
    WHERE fl.base_airport IN ('${AIRPORTS.join("','")}')
      AND (p.ap = 'ALL' OR fl.base_airport = p.ap)
      AND coalesce(fl.is_removed, 0) = 0
+     AND upper(coalesce(trim(fl.service_type), '')) <> 'W' -- harbiy reyslar hisobga olinmaydi
      AND fl.trans_type IN (1, 2)
      AND ((fl.planned >= p.af AND fl.planned < p.at + 1) OR (fl.planned >= p.bf AND fl.planned < p.bt + 1))
    ORDER BY fl.aircompany, fl.number, fl.planned, fl.base_airport, fl.airport, fl.trans_type, fl.updated_at DESC NULLS LAST, fl.id DESC
@@ -58,10 +59,10 @@ SELECT json_build_object(
   'a', (SELECT row_to_json(m) FROM m WHERE per = 'a'),
   'b', (SELECT row_to_json(m) FROM m WHERE per = 'b'),
   'kunlar', json_build_object(
-    'a', (SELECT coalesce(json_agg(json_build_array(to_char(kun, 'YYYY-MM-DD'), baj, pax) ORDER BY kun), '[]'::json)
-            FROM (SELECT kun, count(*) FILTER (WHERE ok) AS baj, coalesce(sum(pax) FILTER (WHERE ok), 0) AS pax FROM g2 WHERE per = 'a' GROUP BY kun) d),
-    'b', (SELECT coalesce(json_agg(json_build_array(to_char(kun, 'YYYY-MM-DD'), baj, pax) ORDER BY kun), '[]'::json)
-            FROM (SELECT kun, count(*) FILTER (WHERE ok) AS baj, coalesce(sum(pax) FILTER (WHERE ok), 0) AS pax FROM g2 WHERE per = 'b' GROUP BY kun) d)),
+    'a', (SELECT coalesce(json_agg(json_build_array(to_char(kun, 'YYYY-MM-DD'), baj, pax, yk) ORDER BY kun), '[]'::json)
+            FROM (SELECT kun, count(*) FILTER (WHERE ok) AS baj, coalesce(sum(pax) FILTER (WHERE ok), 0) AS pax, coalesce(sum(yuk + poc) FILTER (WHERE ok), 0) AS yk FROM g2 WHERE per = 'a' GROUP BY kun) d),
+    'b', (SELECT coalesce(json_agg(json_build_array(to_char(kun, 'YYYY-MM-DD'), baj, pax, yk) ORDER BY kun), '[]'::json)
+            FROM (SELECT kun, count(*) FILTER (WHERE ok) AS baj, coalesce(sum(pax) FILTER (WHERE ok), 0) AS pax, coalesce(sum(yuk + poc) FILTER (WHERE ok), 0) AS yk FROM g2 WHERE per = 'b' GROUP BY kun) d)),
   'ak', (SELECT coalesce(json_agg(t), '[]'::json) FROM (
            SELECT ak AS k,
                   count(*) FILTER (WHERE ok AND per = 'a') AS a_baj, count(*) FILTER (WHERE ok AND per = 'b') AS b_baj,

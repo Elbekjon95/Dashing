@@ -39,7 +39,34 @@ export default function Kechikish() {
     </>
   );
   const iK = items(byK, (x) => (x === "-" ? "Kodsiz" : x), (x) => dDesc(x));
-  const iG = items(byG, (x) => x);
+  // guruhlar: izoh (qaysi kodlar kiradi) va umumiy kechikkanlar ichidagi ulush
+  const G_NOTE: Record<string, string> = {
+    "Aviakompaniya ichki": "Aviakompaniyaning ichki sabablari",
+    "Yoʻlovchi va bagaj": "Roʻyxatdan oʻtkazish, yoʻlovchilar va bagaj",
+    "Yuk va pochta": "Yuk va pochtani qabul qilish va yuklash",
+    "Yerdagi xizmat": "Yerdagi xizmat: yoqilgʻi, tozalash, ovqat va boshqalar",
+    "Texnik sabablar": "Samolyotning texnik holati",
+    "Shikast / IT tizimlar": "Samolyot shikasti va IT tizimlari",
+    "Ekipaj va parvoz operatsiyasi": "Ekipaj va parvoz operatsiyalari",
+    "Ob-havo": "Ob-havo sharoiti",
+    "Havo harakati va aeroport": "Havo harakati boshqaruvi va aeroport cheklovlari",
+    "Aylanma (oldingi reys)": "Samolyot oldingi reysdan kech kelgani uchun — zanjirli kechikish",
+    "Boshqa": "Boshqa sabablar",
+    "Kodsiz / nomaʼlum": "Sabab kodi kiritilmagan",
+  };
+  const G_CODE: Record<string, string> = { "Aviakompaniya ichki": "01–09", "Yoʻlovchi va bagaj": "10–19", "Yuk va pochta": "20–29", "Yerdagi xizmat": "30–39", "Texnik sabablar": "40–49", "Shikast / IT tizimlar": "50–59", "Ekipaj va parvoz operatsiyasi": "60–69", "Ob-havo": "70–79", "Havo harakati va aeroport": "80–89", "Aylanma (oldingi reys)": "90–96", "Boshqa": "97–99" };
+  const gLbl = (g: string) => (G_CODE[g] ? "(" + G_CODE[g] + ") " : "") + g; // kod nomdan oldin
+  const gTot = Object.keys(byG).reduce((t, k) => t + byG[k].n, 0);
+  const iG: any[] = Object.keys(byG).map((g) => ({ code: gLbl(g), g, sub: "", value: byG[g].n, m: byG[g].m, extra: P(byG[g].n / (gTot || 1)) + " · " + N(byG[g].m / byG[g].n) + " daq" })).sort((x, y) => y.value - x.value);
+  const tipG = (it: RankItem) => (
+    <>
+      <div className="h">{it.code}</div>
+      <div style={{ maxWidth: 240, fontSize: 11.5, opacity: 0.85, marginBottom: 4 }}>{G_NOTE[(it as any).g] || ""}</div>
+      <TipRow name="Kechikkan uchishlar" val={N(it.value)} />
+      <TipRow name="Ulushi" val={P(it.value / (gTot || 1))} />
+      <TipRow name="Oʻrtacha kechikish" val={N(it.m / it.value) + " daq"} />
+    </>
+  );
   const iX = items(byX, (x) => x);
 
   const byA: Record<string, any> = {};
@@ -63,9 +90,14 @@ export default function Kechikish() {
         <Card title="Sabablar (IATA kodi)" hint={dn + " · eng koʻp 12 tasi · oʻngda — oʻrtacha kechikish"}
           chart={<Rank items={iK.slice(0, 12)} tip={tipF} tone="warm" />}
           table={<DataTable scroll rows={iK} cols={[{ h: "Kod", f: (r) => r.code }, { h: "Sabab", f: (r) => r.sub }, { h: "Reyslar", n: true, f: (r) => N(r.value) }, { h: "Oʻrtacha", n: true, f: (r) => r.extra }]} />} />
-        <Card title="Sabablar guruhi" hint={"IATA guruhlari · " + dn}
-          chart={<Rank items={iG} tip={tipF} tone="red" />}
-          table={<DataTable rows={iG} cols={[{ h: "Guruh", f: (r) => r.code }, { h: "Reyslar", n: true, f: (r) => N(r.value) }, { h: "Oʻrtacha", n: true, f: (r) => r.extra }]} />} />
+        <Card title="Kechikish sabablari (guruhlar)" hint={"Rejadan 15 daqiqadan ko'p kechikkan uchishlar · IATA sabab kodlari guruhlarga yig'ilgan · " + dn}
+          chart={<Rank items={iG} tip={tipG} tone="red" />}
+          table={<DataTable rows={iG} cols={[
+            { h: "Sabab guruhi", f: (r) => <>{r.code}<small>{G_NOTE[r.g] || ""}</small></> },
+            { h: "Kechikkan uchishlar", n: true, f: (r) => N(r.value) },
+            { h: "Ulush", n: true, f: (r) => P(r.value / (gTot || 1)) },
+            { h: "Oʻrtacha kechikish", n: true, f: (r) => N(r.m / r.value) + " daq" },
+          ]} />} />
         <Card title="Masʼul xizmat" hint={"Bazadagi kechikish xizmati boʻyicha · " + dn}
           chart={<Rank items={iX.slice(0, 12)} tip={tipF} tone="deep" />}
           table={<DataTable scroll rows={iX} cols={[{ h: "Xizmat", f: (r) => r.code }, { h: "Reyslar", n: true, f: (r) => N(r.value) }, { h: "Oʻrtacha", n: true, f: (r) => r.extra }]} />} />

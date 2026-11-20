@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { N, N1, P, T, sum } from "@/lib/format";
 import { Delta, TipRow, davrNom, useDash, useLookups, useSelAp } from "@/lib/dash";
+import { ST } from "@/lib/static";
 import { Card, DataTable, Rank, Row, Stats, Tabs, type Col } from "../charts";
 
 const TP_TITLE: Record<string, string> = { all: "Barcha aviakompaniyalar", rp: "Muntazam yoʻlovchi reyslari", rc: "Muntazam yuk reyslari", cp: "Charter yoʻlovchi reyslari", cc: "Charter yuk reyslari", bz: "Biznes aviatsiya reyslari", ot: "Boshqa reyslar" };
@@ -29,6 +30,24 @@ export default function Avia() {
   const tl = build(rowsAll.filter((r: any) => tp === "all" || (r.tp || "rp") === tp)); // jadval — tanlangan tur boʻyicha
   const tTotP = sum(tl, "p");
   const totP = sum(list, "p"), totR = sum(list, "r"), top1 = list[0];
+
+  // reys turlari, samolyot turlari va bort raqamlari (aeroport tanlangan boʻlsa — faqat oʻsha aeroport)
+  const tr = D.turlar || { st: [], vs: [], bn: [] };
+  const agg = (rows: any[], key: (r: any) => string) => { const o: Record<string, number> = {}; selAp(rows || []).forEach((r: any) => { const kk = key(r); o[kk] = (o[kk] || 0) + r[p]; }); return Object.keys(o).map((k) => ({ k, v: o[k] })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); };
+  const st = agg(tr.st, (r) => r.k), vs = agg(tr.vs, (r) => r.k), bn = agg(tr.bn, (r) => r.k + "|" + r.ak), vsT = sum(vs, "v"), stT = sum(st, "v"), bnT = sum(bn, "v");
+  // samolyot turi: kod oʻrniga bazadagi nom ("Airbus A320 NEO"); nom topilmasa — kodning oʻzi
+  const acName = (c: string) => { const n = D.lugat?.vs?.[c]; return n ? String(n).replace(/\s+(All\s+)?Pax(\s+subtype)?$/i, "") : c; };
+  // bort raqami: UK bilan boshlanadigan haqiqiy roʻyxatdan oʻtish raqami; bazada HY samolyotlari raqamsiz yozilgan ("32028") — ularga UK qoʻshiladi (UK32028)
+  const regNo = (c: string) => (/^[0-9]{5}$/.test(c) ? "UK" + c : c);
+  // roʻyxatdan oʻtish prefiksi (davlat belgisi): "UK32028" → UK, "A6EVA" → A6, "N123AB" → N
+  const pfx = (r: string) => (/^N\d/.test(r) ? "N" : r.slice(0, 2));
+  const PFX_C: Record<string, string> = { UK: "Oʻzbekiston", RA: "Rossiya", "4K": "Ozarbayjon", "4L": "Gruziya", EX: "Qirgʻiziston", UP: "Qozogʻiston", EY: "Tojikiston", EZ: "Turkmaniston", TC: "Turkiya", A6: "BAA", A7: "Qatar", HZ: "Saudiya", "9K": "Quvayt", "9H": "Malta", EP: "Eron", AP: "Pokiston", VT: "Hindiston", HL: "Koreya", OE: "Avstriya", SP: "Polsha", LY: "Litva", YL: "Latviya", ES: "Estoniya", VP: "Bermud", VQ: "Bermud", N: "AQSh", OM: "Slovakiya", OK: "Chexiya", LZ: "Bolgariya", YR: "Ruminiya", ER: "Moldova", UR: "Ukraina", EW: "Belarus", RP: "Filippin", HS: "Tailand", "9V": "Singapur", "9M": "Malayziya", PK: "Indoneziya" };
+  const fmt = (() => {
+    const m: Record<string, { n: number; ex: string[]; pf: Record<string, number> }> = {};
+    bn.forEach((x) => { const i = x.k.indexOf("|"); const r = regNo(x.k.slice(0, i)), a = x.k.slice(i + 1); const o = (m[a] = m[a] || { n: 0, ex: [], pf: {} }); o.n++; o.pf[pfx(r)] = (o.pf[pfx(r)] || 0) + 1; if (o.ex.length < 3) o.ex.push(r); });
+    return Object.keys(m).map((a) => ({ ak: a, ...m[a] })).sort((a, b) => b.n - a.n);
+  })();
+  const bnSplit = (k: string) => { const i = k.indexOf("|"); return { reg: regNo(k.slice(0, i)), ak: k.slice(i + 1) }; };
 
   const cols: Col[] = [
     { h: "#", n: true, f: (r) => tl.indexOf(r) + 1 },
@@ -59,6 +78,25 @@ export default function Avia() {
       <Card title={TP_TITLE[tp] || "Barcha aviakompaniyalar"} hint={dn + " · aviakompaniyalar boʻyicha"}
         tools={<Tabs options={TP_OPTS} val={tp} onPick={(v) => setTp(v)} />}>
         <DataTable scroll rows={tl} cols={cols} />
+      </Card>
+      <Card title="Reys turlari, samolyotlar va bort raqamlari" hint={"Bajarilgan harakatlar · " + dn}>
+        <section className="avia__sec">
+          <h3>Reys turlari <small>IATA xizmat turi</small></h3>
+          <Rank tone="deep" items={st.slice(0, 10).map((x) => ({ code: x.k, sub: ST[x.k] || "Boshqa", value: x.v, extra: P(x.v / (stT || 1)) }))} />
+        </section>
+        <section className="avia__sec">
+          <h3>Samolyot turlari <small>eng koʻp uchragan 12 tasi</small></h3>
+          <Rank items={vs.slice(0, 12).map((x) => ({ code: acName(x.k), value: x.v, extra: P(x.v / (vsT || 1)) }))} />
+        </section>
+        <section className="avia__sec">
+          <h3>Aviakompaniyalar bort raqami formati <small>roʻyxatdan oʻtish prefiksi va samolyotlar soni</small></h3>
+          <DataTable scroll rows={fmt} cols={[
+            { h: "Aviakompaniya", f: (r: any) => <><b>{r.ak}</b><small>{akName(r.ak)}</small></> },
+            { h: "Prefiks", f: (r: any) => Object.keys(r.pf).sort((a, b) => r.pf[b] - r.pf[a]).map((k) => k + (PFX_C[k] ? " (" + PFX_C[k] + ")" : "") + (Object.keys(r.pf).length > 1 ? " ×" + r.pf[k] : "")).join(", ") },
+            { h: "Samolyotlar", n: true, f: (r: any) => N(r.n) },
+            { h: "Namuna", f: (r: any) => r.ex.join(", ") },
+          ]} />
+        </section>
       </Card>
     </>
   );

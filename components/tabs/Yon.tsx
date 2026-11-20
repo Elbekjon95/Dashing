@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useMemo } from "react";
-import { AP_LIST, ST, YON } from "@/lib/static";
+import { AP_LIST, YON } from "@/lib/static";
 import { N, P, sum } from "@/lib/format";
 import { Delta, TipRow, davrNom, useDash, useLookups, useSelAp } from "@/lib/dash";
 import { Card, DataTable, Rank, Row, Stats, type Col } from "../charts";
@@ -32,9 +32,6 @@ export default function Yon() {
   const totP = sum(list, "p");
   const cl: any[] = Object.keys(byC).map((k) => byC[k]).sort((a, b) => b.p - a.p);
 
-  const tr = D.turlar || { st: [], vs: [] };
-  const agg = (rows: any[]) => { const o: Record<string, number> = {}; selAp(rows).forEach((r) => { o[r.k] = (o[r.k] || 0) + r[p]; }); return Object.keys(o).map((k) => ({ k, v: o[k] })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); };
-  const st = agg(tr.st), vs = agg(tr.vs), stT = sum(st, "v");
 
   const cols: Col[] = [
     { h: "#", n: true, f: (r) => list.indexOf(r) + 1 },
@@ -53,8 +50,8 @@ export default function Yon() {
         ...["MVL", "CIS", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
         { l: "Yoʻnalishlar", v: N(list.length), r: prevDest ? <><Delta big cur={list.length} prev={prevDest} /> edi {N(prevDest)}</> : null, s: N(Object.keys(byC).length) + " ta davlat · " + dn },
       ]} />
-      <Card title="Yoʻnalishlar xaritasi" hint={"Doira kattaligi — yoʻlovchilar soni · " + dn}
-        chart={<WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "TAS" : undefined} top={10} unit="yoʻlovchi" aspect={2.6} />} />
+      <Card cls="vg__globe" title="Yoʻnalishlar xaritasi" hint={"Doira kattaligi — yoʻlovchilar soni · " + dn}
+        chart={<WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "UZ" : undefined} top={10} unit="yoʻlovchi" aspect={2.6} />} />
       <Row cls="vg__row--two">
         <Card title="Eng katta yoʻnalishlar" hint={"Yoʻlovchilar boʻyicha top-20 · " + dn}
           chart={<Rank items={list.slice(0, 20).map((x) => ({ code: x.b, sub: placeName(x.b) + " · " + country(x.b), value: x.p, x }))}
@@ -62,13 +59,6 @@ export default function Yon() {
         <Card title="Davlatlar" hint={"Yoʻlovchilar boʻyicha · " + dn}
           chart={<Rank tone="warm" items={cl.slice(0, 15).map((x) => ({ code: x.c, value: x.p, extra: P(x.p / (totP || 1)) }))} />}
           table={<DataTable scroll rows={cl} cols={[{ h: "Davlat", f: (r) => r.c }, { h: "Yoʻlovchilar", n: true, f: (r) => N(r.p) }, { h: "Reyslar", n: true, f: (r) => N(r.r) }]} />} />
-      </Row>
-      <Row cls="vg__row--two">
-        <Card title="Reys turlari" hint={"IATA xizmat turi · bajarilgan harakatlar · " + dn}
-          chart={<Rank tone="deep" items={st.slice(0, 10).map((x) => ({ code: x.k, sub: ST[x.k] || "Boshqa", value: x.v, extra: P(x.v / (stT || 1)) }))} />} />
-        <Card title="Samolyot turlari" hint={"Eng koʻp uchragan 12 tasi · " + dn}
-          chart={<Rank short items={vs.slice(0, 12).map((x) => ({ code: x.k, value: x.v }))} />}
-          table={<DataTable scroll rows={vs} cols={[{ h: "Samolyot turi", f: (r) => r.k }, { h: "Harakatlar", n: true, f: (r) => N(r.v) }]} />} />
       </Row>
       <Card title="Barcha yoʻnalishlar" hint={dn}>
         <DataTable scroll rows={list} cols={cols} />

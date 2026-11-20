@@ -11,8 +11,9 @@ f AS (
          fl.factual AS fct,
          coalesce(fl.is_canceled, 0) = 1 AS bekor
     FROM flights fl, p
-   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','TVT','SRS','COH','OQN','MOK','OMN','AFS','CHI','RBZ','IYO')
+   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO')
      AND coalesce(fl.is_removed, 0) = 0
+     AND upper(coalesce(trim(fl.service_type), '')) <> 'W' -- harbiy reyslar hisobga olinmaydi
      AND fl.trans_type = 1
      AND fl.planned >= least(p.yb, p.bugun - 30)
      AND fl.planned <  p.bugun

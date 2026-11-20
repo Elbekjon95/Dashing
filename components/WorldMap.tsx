@@ -1,10 +1,19 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { WORLD_PATH } from "@/lib/worldpath";
 import { C, N } from "@/lib/format";
 import { useLookups } from "@/lib/dash";
-import { mapBox, proj } from "@/lib/uzcalc";
+import { mapBox, proj as projCode, UZ_PATHS } from "@/lib/uzcalc";
 import { useWidth } from "./charts";
+
+// Oʻzbekiston konturi dunyo xaritasi koordinatalarida (x = boylam + 180, y = 83 − kenglik)
+const UZ_WORLD = UZ_PATHS.map((r) => r.d).join("").replace(/([ML])([0-9.]+),([0-9.]+)/g, (_m, c, x, y) => {
+  const lon = +x / (0.751264 * 76.7199) + 55.9, lat = 45.7 - +y / 76.7199;
+  return c + (lon + 180).toFixed(2) + "," + (83 - lat).toFixed(2);
+});
+export const UZ_HUB = "UZ"; // "barcha aeroportlar" rejimida markaz — butun Oʻzbekiston
+const UZ_CENTER: [number, number] = [64.6 + 180, 83 - 41.4];
+const proj = (code: string): [number, number] | null => (code === UZ_HUB ? UZ_CENTER : projCode(code));
 
 type Pair = { from: string; to: string; n: number; r?: number };
 const ARCS = 12; // doimiy koʻrinadigan chiziqlar soni (eng katta yoʻnalishlar)
@@ -30,10 +39,58 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
     return { dest, list, mx: list.length ? list[0].n : 1 };
   }, [eff]);
 
-  const shown = hub ? [hub] : homes; // markaz belgilari
+  const shown = hub ? [hub] : homes; // markaz belgilari (hub = UZ — butun Oʻzbekiston)
   const pts = shown.concat(g.list.map((d) => d.code)).map(proj).filter(Boolean) as [number, number][];
-  const vb = mapBox(pts, aspect);
-  const W = Math.max(260, cw || 800), H = Math.round((W * vb[3]) / vb[2]), k = vb[2] / W;
+  const vb0 = mapBox(pts, aspect);
+  const W = Math.max(260, cw || 800), H = Math.round((W * vb0[3]) / vb0[2]);
+
+  // zoom / surish: koʻrinish oynasi (viewBox) markazi va kattalashtirish; markaz oʻzgarsa (aeroport tanlansa) boshlangʻich holatga qaytadi
+  const viewKey = (hub || "") + "|" + homes.join(",");
+  const [zs, setZs] = useState({ key: "", z: 1, cx: 0, cy: 0 });
+  const cur = zs.key === viewKey ? zs : { key: viewKey, z: 1, cx: vb0[0] + vb0[2] / 2, cy: vb0[1] + vb0[3] / 2 };
+  const boxOf = (z: number, cx: number, cy: number): number[] => {
+    if (z <= 1) return vb0;
+    const w = vb0[2] / z, h = vb0[3] / z;
+    const x = Math.min(Math.max(cx - w / 2, 0), 360 - w), y = Math.min(Math.max(cy - h / 2, 0), 140 - h);
+    return [x, y, w, h];
+  };
+  const vb = boxOf(cur.z, cur.cx, cur.cy);
+  const k = vb[2] / W; // belgilar ekranda bir xil oʻlchamda qoladi
+  const zoomAt = (prev: typeof cur, f: number, fx = 0.5, fy = 0.5) => {
+    const nz = Math.min(14, Math.max(1, prev.z * f));
+    const b = boxOf(prev.z, prev.cx, prev.cy);
+    const wx = b[0] + fx * b[2], wy = b[1] + fy * b[3];
+    const nw = vb0[2] / nz, nh = vb0[3] / nz;
+    if (nz <= 1) return { key: viewKey, z: 1, cx: vb0[0] + vb0[2] / 2, cy: vb0[1] + vb0[3] / 2 };
+    const nb = boxOf(nz, wx - fx * nw + nw / 2, wy - fy * nh + nh / 2);
+    return { key: viewKey, z: nz, cx: nb[0] + nb[2] / 2, cy: nb[1] + nb[3] / 2 };
+  };
+  const svgRef = useRef<SVGSVGElement>(null);
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const [grab, setGrab] = useState(false);
+  useEffect(() => {
+    const el = svgRef.current; if (!el) return;
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+      setZs((prev) => zoomAt(prev.key === viewKey ? prev : { key: viewKey, z: 1, cx: vb0[0] + vb0[2] / 2, cy: vb0[1] + vb0[3] / 2 }, e.deltaY < 0 ? 1.25 : 0.8, fx, fy));
+    };
+    el.addEventListener("wheel", wheel, { passive: false });
+    return () => el.removeEventListener("wheel", wheel);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewKey, vb0.join(",")]);
+  const onDown = (e: React.PointerEvent) => { if (cur.z <= 1) return; drag.current = { x: e.clientX, y: e.clientY, moved: false }; (e.currentTarget as Element).setPointerCapture?.(e.pointerId); setGrab(true); };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current; if (!d) return;
+    const dx = (e.clientX - d.x) * k, dy = (e.clientY - d.y) * k;
+    d.x = e.clientX; d.y = e.clientY; d.moved = true;
+    setZs((prev) => { const c = prev.key === viewKey ? prev : cur; const b = boxOf(c.z, c.cx - dx, c.cy - dy); return { key: viewKey, z: c.z, cx: b[0] + b[2] / 2, cy: b[1] + b[3] / 2 }; });
+  };
+  const onUp = () => { drag.current = null; setGrab(false); };
+  const zin = () => setZs((p) => zoomAt(p.key === viewKey ? p : cur, 1.6));
+  const zout = () => setZs((p) => zoomAt(p.key === viewKey ? p : cur, 1 / 1.6));
+  const zreset = () => setZs({ key: viewKey, z: 1, cx: vb0[0] + vb0[2] / 2, cy: vb0[1] + vb0[3] / 2 });
 
   const foreign = g.list.filter((d) => homes.indexOf(d.code) < 0 && proj(d.code));
   const topSet = new Set(foreign.slice(0, ARCS).map((d) => d.code));
@@ -72,9 +129,9 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
 
   return (
     <div ref={ref} className="wmapw">
-      <svg className="wmap__svg" viewBox={vb.join(" ")} width={W} height={H}>
+      <svg ref={svgRef} className={"wmap__svg" + (cur.z > 1 ? " zoomed" : "") + (grab ? " grab" : "")} viewBox={vb.join(" ")} width={W} height={H} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
         <defs>
-          <radialGradient id="wmBub" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#dbe8ff" stopOpacity="0.95" /><stop offset="0.6" stopColor="#6c9cf5" stopOpacity="0.8" /><stop offset="1" stopColor="#2f6fe4" stopOpacity="0.75" /></radialGradient>
+          <radialGradient id="wmBub" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#e9fff9" stopOpacity="0.95" /><stop offset="0.6" stopColor="#8ad4c4" stopOpacity="0.85" /><stop offset="1" stopColor="#2a9d8f" stopOpacity="0.8" /></radialGradient>
           <radialGradient id="wmHome" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="#ff9a4d" stopOpacity="0.55" /><stop offset="1" stopColor="#ff9a4d" stopOpacity="0" /></radialGradient>
         </defs>
         <rect className="wmap__sea" x={0} y={0} width={360} height={140} />
@@ -83,6 +140,7 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
           {[23, 53, 83, 113].map((y) => <line key={"p" + y} x1={0} x2={360} y1={y} y2={y} />)}
         </g>
         <path className="wmap__world" d={WORLD_PATH} />
+        <path className={"wmap__uz" + (hub === UZ_HUB ? " on" : "")} d={UZ_WORLD} />
         {eff.map((p, i) => {
           const isTop = topSet.has(p.to), isHot = hot === p.to;
           if (!isTop && !isHot) return null; // qolgan yoʻnalishlar faqat doira sifatida; ustiga olib borilganda chizigʻi chiqadi
@@ -134,11 +192,16 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
               <circle cx={p[0]} cy={p[1]} r={13 * k} fill="url(#wmHome)" />
               <circle className="wmap__ring" cx={p[0]} cy={p[1]} r={9 * k} strokeWidth={1.5 * k} />
               <circle className="wmap__home" cx={p[0]} cy={p[1]} r={3.6 * k} />
-              {i === 0 || shown.length <= 3 ? <text className="wmap__label" x={p[0] + 7 * k} y={p[1] - 6 * k} style={{ fontSize: 12 * k, strokeWidth: 3 * k }}>{h}</text> : null}
+              {i === 0 || shown.length <= 3 ? <text className="wmap__label" x={p[0] + 7 * k} y={p[1] - 6 * k} style={{ fontSize: 12 * k, strokeWidth: 3 * k }}>{h === UZ_HUB ? "Oʻzbekiston" : h}</text> : null}
             </g>
           );
         })}
       </svg>
+      <div className="wmap__zoom">
+        <button type="button" title="Kattalashtirish" aria-label="Kattalashtirish" onClick={zin}>+</button>
+        <button type="button" title="Kichraytirish" aria-label="Kichraytirish" onClick={zout} disabled={cur.z <= 1}>−</button>
+        <button type="button" title="Boshlangʻich koʻrinish" aria-label="Boshlangʻich koʻrinish" onClick={zreset} disabled={cur.z <= 1}>⟲</button>
+      </div>
       {hot && g.dest[hot] && proj(hot) ? (() => {
         const q = proj(hot) as [number, number], x = Math.min(Math.max((q[0] - vb[0]) / k, 110), W - 110), y = (q[1] - vb[1]) / k, d = g.dest[hot];
         return (

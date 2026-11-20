@@ -616,3 +616,46 @@ body { background: var(--page); }
 
 .tvbtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--bar-line); background: #fff; color: var(--v-ink); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
 .tvbtn:hover { background: #eef5f3; }
+
+/* ---- yoʻnalishlar xaritasi: dashbord xaritasi (qoʻngʻir-yashil) bilan bir xil dizayn ---- */
+.vg__globe .wmap__svg { border: 1px solid rgba(190, 240, 226, 0.18); background: rgba(8, 43, 41, 0.35); }
+.vg__globe .wmap__sea { fill: rgba(8, 43, 41, 0.25); }
+.vg__globe .wmap__grat line { stroke: rgba(190, 240, 226, 0.08); }
+.vg__globe .wmap__world { fill: rgba(190, 240, 226, 0.1); stroke: rgba(190, 240, 226, 0.4); }
+.wmap__uz { fill: rgba(190, 240, 226, 0.06); stroke: rgba(190, 240, 226, 0.5); stroke-width: 0.8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; pointer-events: none; }
+.wmap__uz.on { fill: rgba(255, 154, 77, 0.45); stroke: #ffc48a; stroke-width: 1.4px; filter: drop-shadow(0 0 7px rgba(255, 154, 77, 0.85)); animation: wmap-uzglow 2.4s ease-in-out infinite; }
+@keyframes wmap-uzglow { 0%, 100% { fill: rgba(255, 154, 77, 0.35); } 50% { fill: rgba(255, 154, 77, 0.6); } }
+@media (prefers-reduced-motion: reduce) { .wmap__uz.on { animation: none; } }
+.vg__globe .wmap__arc { stroke: #8ad4c4; }
+.vg__globe .wmap__arc.hot { stroke: #ff9a4d; }
+.vg__globe .wmap__bubble { stroke: #e9fff9; filter: drop-shadow(0 1px 3px rgba(8, 43, 41, 0.6)); }
+.vg__globe .wmap__bubble.hot { stroke: #ff9a4d; filter: drop-shadow(0 0 6px rgba(255, 154, 77, 0.85)); }
+.vg__globe .wmap__dot { fill: #fff; stroke: #8ad4c4; filter: drop-shadow(0 0 3px rgba(138, 212, 196, 0.8)); }
+.vg__globe .wmap__home { fill: #ff9a4d; stroke: #fff; }
+.vg__globe .wmap__ring { stroke: #ff9a4d; }
+.vg__globe .wmap__label { fill: #ffd9b3 !important; stroke: rgba(8, 43, 41, 0.75); paint-order: stroke; }
+.vg__globe .wmap__tag rect { fill: rgba(8, 43, 41, 0.88); stroke: rgba(190, 240, 226, 0.35); filter: none; }
+.vg__globe .wmap__tag text { fill: #fff; }
+.vg__globe .wmap__tag .wmap__tagn { fill: #ffc48a; }
+.vg__globe .wmap__lead { stroke: rgba(190, 240, 226, 0.45); }
+.vg__globe .wmapw .wmap__foot { color: var(--d-muted); }
+.vg__globe .wmapw .wmap__top button { background: rgba(190, 240, 226, 0.1); border: 1px solid var(--d-line); color: var(--d-ink); }
+.vg__globe .wmapw .wmap__top button:hover, .vg__globe .wmapw .wmap__top button.on { background: rgba(190, 240, 226, 0.26); border-color: #bff0e2; }
+.vg__globe .wmapw .wmap__top button span { color: var(--d-muted); }
+.vg__globe .wmapw .wmap__top button i { color: #ffc48a; }
+.vg__globe .wmap__tip { background: #082b29; border: 1px solid rgba(190, 240, 226, 0.3); }
+.vg__globe .wmap__tip::after { background: #082b29; }
+.vg__globe .wmap__tip > span { color: #9ccfc4; }
+
+/* ---- xarita zoom ---- */
+.wmap__svg.zoomed { cursor: grab; touch-action: none; } .wmap__svg.zoomed.grab { cursor: grabbing; }
+.wmap__zoom { position: absolute; top: 12px; right: 12px; z-index: 4; display: flex; flex-direction: column; gap: 1px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(190, 240, 226, 0.3); background: rgba(8, 43, 41, 0.82); backdrop-filter: blur(4px); }
+.wmap__zoom button { width: 32px; height: 32px; border: 0; background: transparent; color: #e9fff9; font-size: 18px; line-height: 1; font-weight: 600; }
+.wmap__zoom button + button { border-top: 1px solid rgba(190, 240, 226, 0.18); }
+.wmap__zoom button:hover:not(:disabled) { background: rgba(190, 240, 226, 0.22); }
+.wmap__zoom button:disabled { opacity: 0.35; cursor: default; }
+
+/* ---- aviakompaniyalar: reys turlari / samolyotlar / stoyankalar — bitta kartada, bitta ustunda ---- */
+.avia__sec + .avia__sec { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--v-line); }
+.avia__sec h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--v-ink); }
+.avia__sec h3 small { font-size: 12px; font-weight: 500; color: var(--v-muted); margin-left: 6px; }

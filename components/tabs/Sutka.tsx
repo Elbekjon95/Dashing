@@ -42,6 +42,8 @@ export default function Sutka() {
   const s = D?.sutka;
   if (!s || !s.dep || !s.arr) return null;
   const U: Side = { ...ZERO, ...s.dep }, Q: Side = { ...ZERO, ...s.arr };
+  // s.hozir — UTC; Toshkent vaqti = UTC+5 (yozgi/qishki vaqt yoʻq)
+  const tas = (() => { const m = /^([0-9]{1,2}):([0-9]{2})$/.exec(String(s.hozir || "")); return m ? String((+m[1] + 5) % 24).padStart(2, "0") + ":" + m[2] : ""; })();
   const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 + "%" : "—");
   const kg = (v: number) => (v >= 100000 ? N(T(v)) + " t" : N(v) + " kg");
   const pies = (x: Side) => [{ label: "Ichki", value: x.vvl, color: "#0f766e" }, { label: "Xalqaro (MDH bilan)", value: x.xal, color: "#f08a3c" }];
@@ -60,7 +62,7 @@ export default function Sutka() {
   return (
     <>
       <div className="sut__head" id="sutka">
-        <h2>{ICONS.activity}Joriy sutka <small>{s.bugun} · {s.hozir} UTC holatiga</small></h2>
+        <h2>{ICONS.activity}Joriy sutka <small>{s.bugun} · {tas} Toshkent vaqti ({s.hozir} UTC) holatiga</small></h2>
         <p>Barcha aeroportlar boʻyicha · rahbariyat (Grafana) dashboardi bilan bir xil hisob: UTC kuni, bekorlarsiz, LDM boʻyicha yoʻlovchilar. Aeroport tanlovi bu boʻlimga taʼsir qilmaydi.</p>
       </div>
 
@@ -69,7 +71,7 @@ export default function Sutka() {
           <div className="sut__cols"><span /><span>{ICONS.dep}Uchish</span><span>{ICONS.arr}Qoʻnish</span></div>
           <Pair icon="dep" label="Jami reyslar (reja)" a={N(U.rej)} b={N(Q.rej)} />
           <Pair icon="users" label="Jami yoʻlovchilar" a={N(U.pax)} b={N(Q.pax)} />
-          <Pair icon="done" label="Bajarilgan reyslar" a={<>{N(U.baj)}<small>{pct(U.baj, U.rej)}</small></>} b={<>{N(Q.baj)}<small>{pct(Q.baj, Q.rej)}</small></>} />
+          <Pair icon="done" label="Amalda uchgan / qoʻngan" a={<>{N(U.baj)}<small>{pct(U.baj, U.rej)}</small></>} b={<>{N(Q.baj)}<small>{pct(Q.baj, Q.rej)}</small></>} />
           <Pair icon="clock" label="Kechikkan reyslar" a={N(U.kech)} b={N(Q.kech)} />
           <Pair icon="cargo" label="Yuk + pochta" a={kg(U.yuk)} b={kg(Q.yuk)} />
           <Pair icon="alert" label="Bekor qilingan reyslar" a={N(U.bek)} b={N(Q.bek)} tone="red" />

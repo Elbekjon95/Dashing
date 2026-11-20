@@ -21,6 +21,12 @@ ap AS (
    WHERE k IS NOT NULL AND k <> '' AND k IN (SELECT k FROM ishlatilgan)
    ORDER BY k, ustuvor, updated_at DESC NULLS LAST, id DESC
 ),
+vs AS (
+  SELECT DISTINCT ON (code) code, coalesce(nullif(trim(name_eng), ''), nullif(trim(name), '')) AS nm
+    FROM aircraft_types
+   WHERE code IS NOT NULL AND code <> ''
+   ORDER BY code, updated_at DESC NULLS LAST, id DESC
+),
 ks AS (
   SELECT DISTINCT ON (code) code, service
     FROM delay_services
@@ -30,5 +36,6 @@ ks AS (
 SELECT json_build_object(
   'ak', (SELECT coalesce(json_object_agg(code, name), '{}'::json) FROM ak),
   'ap', (SELECT coalesce(json_object_agg(k, json_build_object('n', name, 'e', name_eng, 'c', country_name)), '{}'::json) FROM ap),
+  'vs', (SELECT coalesce(json_object_agg(code, nm), '{}'::json) FROM vs WHERE nm IS NOT NULL),
   'ks', (SELECT coalesce(json_object_agg(code, service), '{}'::json) FROM ks)
 )

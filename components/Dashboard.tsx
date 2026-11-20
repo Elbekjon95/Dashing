@@ -196,9 +196,8 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
               ))}
             </nav>
             <div className="vg__bar-right">
-              <button type="button" className="tvbtn" title="TV rejim" aria-label="TV rejim" onClick={enterTv}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="15" x="2" y="7" rx="2" /><path d="m17 2-5 5-5-5" /></svg>
-                <span>TV</span>
+              <button type="button" className="tvbtn" title="Toʻliq ekran rejimi" aria-label="Toʻliq ekran rejimi" onClick={enterTv}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
               </button>
               <LangSwitch />
               {isAdmin ? (
