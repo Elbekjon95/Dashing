@@ -39,12 +39,14 @@ export default function Avia() {
   const acName = (c: string) => { const n = D.lugat?.vs?.[c]; return n ? String(n).replace(/\s+(All\s+)?Pax(\s+subtype)?$/i, "") : c; };
   // bort raqami: UK bilan boshlanadigan haqiqiy roʻyxatdan oʻtish raqami; bazada HY samolyotlari raqamsiz yozilgan ("32028") — ularga UK qoʻshiladi (UK32028)
   const regNo = (c: string) => (/^[0-9]{5}$/.test(c) ? "UK" + c : c);
+  // rezident (Oʻzbekiston) aviakompaniyalar: maʼlum kodlar roʻyxati + samolyotlarining koʻpchiligi UK raqamli (kamida 2 ta) boʻlgan kompaniyalar
+  const REZ = new Set(["HY", "C6", "HH", "UH", "2U", "Y3", "Y9", "70Y", "X5", "ATT", "UAT", "HJ", "7Q"]);
   const fmt = (() => {
-    const m: Record<string, { n: number; all: string[] }> = {}, seen = new Set<string>();
-    bn.forEach((x) => { const i = x.k.indexOf("|"); const r = regNo(x.k.slice(0, i)), a = x.k.slice(i + 1); if (seen.has(a + "|" + r)) return; seen.add(a + "|" + r); const o = (m[a] = m[a] || { n: 0, all: [] }); o.n++; o.all.push(r); });
-    return Object.keys(m).map((a) => ({ ak: a, n: m[a].n, all: m[a].all.sort() })).sort((a, b) => b.n - a.n);
+    const m: Record<string, { n: number; uk: number; all: string[] }> = {}, seen = new Set<string>();
+    bn.forEach((x) => { const i = x.k.indexOf("|"); const r = regNo(x.k.slice(0, i)), a = x.k.slice(i + 1); if (seen.has(a + "|" + r)) return; seen.add(a + "|" + r); const o = (m[a] = m[a] || { n: 0, uk: 0, all: [] }); o.n++; if (r.startsWith("UK")) o.uk++; o.all.push(r); });
+    return Object.keys(m).filter((a) => REZ.has(a) || (m[a].uk >= 2 && m[a].uk * 2 > m[a].n)).map((a) => ({ ak: a, n: m[a].n, all: m[a].all.sort() })).sort((a, b) => b.n - a.n);
   })();
-  const fmtT = new Set(bn.map((x) => regNo(x.k.slice(0, x.k.indexOf("|"))))).size; // kelgan barcha takrorlanmas samolyotlar
+  const fmtT = new Set(fmt.flatMap((x) => x.all)).size; // rezident kompaniyalarning takrorlanmas samolyotlari
 
   const cols: Col[] = [
     { h: "#", n: true, f: (r) => tl.indexOf(r) + 1 },
@@ -86,7 +88,7 @@ export default function Avia() {
           <Rank items={vs.slice(0, 12).map((x) => ({ code: acName(x.k), value: x.v, extra: P(x.v / (vsT || 1)) }))} />
         </section>
       </Card>
-      <Card title="Aviakompaniyalar samolyotlari soni" hint={dn + " · takrorlanmas bort raqamlari · ulush — barcha kelgan samolyotlarga nisbatan: " + N(fmtT)}
+      <Card title="Rezident aviakompaniyalar samolyotlari soni" hint={dn + " · takrorlanmas bort raqamlari · ulush — rezident kompaniyalarning barcha samolyotlariga nisbatan: " + N(fmtT)}
         chart={<Rank items={fmt.slice(0, 15).map((x) => ({ code: x.ak, sub: akName(x.ak), value: x.n, extra: P(x.n / (fmtT || 1)) }))} />}
         table={<DataTable scroll rows={fmt} cols={[
             { h: "Aviakompaniya", f: (r: any) => <><b>{r.ak}</b><small>{akName(r.ak)}</small></> },

@@ -208,5 +208,6 @@ export const DICT: [string, string, string][] = [
   ["aviakompaniyalar samolyotlari soni","Количество самолётов авиакомпаний","Number of aircraft by airline"], ["takrorlanmas bort raqamlari","уникальные бортовые номера","unique tail numbers"],
   ["reys va samolyot turlari","Типы рейсов и самолётов","Flight and aircraft types"],
   ["bort raqamlari","Бортовые номера","Tail numbers"],
-  ["takrorlanmas bort raqamlari · ulush — barcha kelgan samolyotlarga nisbatan:","уникальные бортовые номера · доля — от всех прилетевших самолётов:","unique tail numbers · share — of all aircraft that came:"],
+  ["takrorlanmas bort raqamlari · ulush — rezident kompaniyalarning barcha samolyotlariga nisbatan:","уникальные бортовые номера · доля — от всех самолётов резидентных компаний:","unique tail numbers · share — of all aircraft of resident airlines:"],
+  ["rezident aviakompaniyalar samolyotlari soni","Количество самолётов резидентных авиакомпаний","Number of aircraft of resident airlines"],
 ];
