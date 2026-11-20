@@ -1,5 +1,5 @@
-export const AP_LIST: string[] = ['TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO','CHI','TVT'];
-export const AP_NAME: Record<string, string> = {TAS:'Toshkent', SKD:'Samarqand', UGC:'Urganch', BHK:'Buxoro', NMA:'Namangan', FEG:'Fargʻona', NVI:'Navoiy', TMJ:'Termiz', NCU:'Nukus', KSQ:'Qarshi', AZN:'Andijon', SRS:'Sariosiyo', COH:'Sox', OQN:'Qoʻqon', MOK:'Moʻynoq', OMN:'Zomin', AFS:'Zarafshon', RBZ:'Shahrisabz', IYO:'Sariosiyo', CHI:'Chirchiq', TVT:'Toshkent-Sharqiy'};
+export const AP_LIST: string[] = ['TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO'];
+export const AP_NAME: Record<string, string> = {TAS:'Toshkent', SKD:'Samarqand', UGC:'Urganch', BHK:'Buxoro', NMA:'Namangan', FEG:'Fargʻona', NVI:'Navoiy', TMJ:'Termiz', NCU:'Nukus', KSQ:'Qarshi', AZN:'Andijon', SRS:'Sariosiyo', COH:'Sox', OQN:'Qoʻqon', MOK:'Moʻynoq', OMN:'Zomin', AFS:'Zarafshon', RBZ:'Shahrisabz', IYO:'Sariosiyo'};
 export const AP_FULL = AP_NAME;
 export const REG_NAME: Record<string, string> = {'UZ-AN':'Andijon viloyati','UZ-BU':'Buxoro viloyati','UZ-FA':'Fargʻona viloyati','UZ-JI':'Jizzax viloyati','UZ-NG':'Namangan viloyati','UZ-NW':'Navoiy viloyati',
     'UZ-QA':'Qashqadaryo viloyati','UZ-QR':'Qoraqalpogʻiston Respublikasi','UZ-SA':'Samarqand viloyati','UZ-SI':'Sirdaryo viloyati','UZ-SU':'Surxondaryo viloyati',

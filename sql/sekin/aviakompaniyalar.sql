@@ -17,7 +17,7 @@ f AS (
               WHEN upper(trim(fl.service_type)) IN ('H','L') THEN 'cc'
               WHEN upper(trim(fl.service_type)) IN ('N','E','D') THEN 'bz' ELSE 'ot' END AS tp
     FROM flights fl, p
-   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO','CHI','TVT')
+   WHERE fl.base_airport IN ('TAS','SKD','UGC','BHK','NMA','FEG','NVI','TMJ','NCU','KSQ','AZN','SRS','COH','OQN','MOK','OMN','AFS','RBZ','IYO')
      AND coalesce(fl.is_removed, 0) = 0
      AND upper(coalesce(trim(fl.service_type), '')) <> 'W' -- harbiy reyslar hisobga olinmaydi
      AND fl.planned >= (p.yb - interval '1 year')
