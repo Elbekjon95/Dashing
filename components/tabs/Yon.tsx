@@ -46,12 +46,12 @@ export default function Yon() {
 
   return (
     <>
+      <Card cls="vg__globe" title="Yoʻnalishlar xaritasi" hint={"Doira kattaligi — yoʻlovchilar soni · " + dn}
+        chart={<WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "UZ" : undefined} top={10} unit="yoʻlovchi" fill />} />
       <Stats list={[
         ...["MVL", "CIS", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
         { l: "Yoʻnalishlar", v: N(list.length), r: prevDest ? <><Delta big cur={list.length} prev={prevDest} /> edi {N(prevDest)}</> : null, s: N(Object.keys(byC).length) + " ta davlat · " + dn },
       ]} />
-      <Card cls="vg__globe" title="Yoʻnalishlar xaritasi" hint={"Doira kattaligi — yoʻlovchilar soni · " + dn}
-        chart={<WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "UZ" : undefined} top={10} unit="yoʻlovchi" aspect={2.6} />} />
       <Row cls="vg__row--two">
         <Card title="Eng katta yoʻnalishlar" hint={"Yoʻlovchilar boʻyicha top-20 · " + dn}
           chart={<Rank items={list.slice(0, 20).map((x) => ({ code: x.b, sub: placeName(x.b) + " · " + country(x.b), value: x.p, x }))}

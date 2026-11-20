@@ -20,10 +20,20 @@ const ARCS = 12; // doimiy koʻrinadigan chiziqlar soni (eng katta yoʻnalishlar
 const LABELS = 8; // yozuv qoʻyiladigan yoʻnalishlar soni
 
 // hub berilsa: barcha aeroportlardan chiqqan qatnovlar manzil boʻyicha birlashtirilib, hub'dan bitta chiziq chiziladi
-export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", aspect = 2.4 }: { homes: string[]; pairs: Pair[]; hub?: string; top?: number; unit?: string; aspect?: number }) {
+export default function WorldMap({ homes, pairs, hub, unit = "reys", aspect = 2.4, fill = false }: { homes: string[]; pairs: Pair[]; hub?: string; top?: number; unit?: string; aspect?: number; fill?: boolean }) {
   const { placeName, country } = useLookups();
   const [ref, cw] = useWidth<HTMLDivElement>();
   const [hot, setHot] = useState<string | null>(null);
+  // fill: xarita ekran balandligini (100vh) toʻldiradi — xarita yuqorisidan ekran pastigacha
+  const [scr, setScr] = useState({ vh: 900, top: 0 });
+  useEffect(() => {
+    if (!fill) return;
+    const f = () => { const r = ref.current?.getBoundingClientRect(); setScr({ vh: window.innerHeight, top: r ? r.top + window.scrollY : 0 }); };
+    f();
+    window.addEventListener("resize", f);
+    return () => window.removeEventListener("resize", f);
+  }, [fill, cw, ref]);
+  const aspectEff = fill ? Math.max(1.2, (cw || 800) / Math.max(320, scr.vh - scr.top - 70)) : aspect;
 
   const eff = useMemo<Pair[]>(() => {
     if (!hub) return pairs;
@@ -41,7 +51,7 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
 
   const shown = hub ? [hub] : homes; // markaz belgilari (hub = UZ — butun Oʻzbekiston)
   const pts = shown.concat(g.list.map((d) => d.code)).map(proj).filter(Boolean) as [number, number][];
-  const vb0 = mapBox(pts, aspect);
+  const vb0 = mapBox(pts, aspectEff);
   const W = Math.max(260, cw || 800), H = Math.round((W * vb0[3]) / vb0[2]);
 
   // zoom / surish: koʻrinish oynasi (viewBox) markazi va kattalashtirish; markaz oʻzgarsa (aeroport tanlansa) boshlangʻich holatga qaytadi
@@ -122,9 +132,8 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
 
   let missing = 0;
   g.list.forEach((d) => { if (!proj(d.code)) missing++; });
-  const topList = g.list.filter((d) => homes.indexOf(d.code) < 0).slice(0, top);
 
-  const foot = hot && g.dest[hot] ? hot + " — " + placeName(hot) + ", " + country(hot) + ": " + N(g.dest[hot].n) + " " + unit : (missing ? "Xaritada koʻrsatilmagan (koordinatasi yoʻq): " + missing + " ta aeroport. " : "") + "Doira ustiga olib boring — chiziq va aeroport nomi chiqadi.";
+  const foot = ((missing ? "Xaritada koʻrsatilmagan (koordinatasi yoʻq): " + missing + " ta aeroport. " : "") + "Doira ustiga olib boring — chiziq va aeroport nomi chiqadi.");
   const on = (code: string) => ({ onMouseEnter: () => setHot(code), onMouseLeave: () => setHot(null) });
 
   return (
@@ -213,15 +222,6 @@ export default function WorldMap({ homes, pairs, hub, top = 8, unit = "reys", as
           </div>
         );
       })() : null}
-      <ul className="wmap__top">
-        {topList.map((d) => (
-          <li key={d.code}>
-            <button className={hot === d.code ? "on" : ""} {...on(d.code)}>
-              <b>{d.code}</b><span>{placeName(d.code)}</span><i>{C(d.n)}</i>
-            </button>
-          </li>
-        ))}
-      </ul>
       <div className="wmap__foot">{foot}</div>
     </div>
   );
