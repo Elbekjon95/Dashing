@@ -659,3 +659,4 @@ body { background: var(--page); }
 .avia__sec + .avia__sec { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--v-line); }
 .avia__sec h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--v-ink); }
 .avia__sec h3 small { font-size: 12px; font-weight: 500; color: var(--v-muted); margin-left: 6px; }
+.avia__regs { font-size: 12px; line-height: 1.5; color: var(--v-muted); word-break: break-word; }
