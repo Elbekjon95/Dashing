@@ -30,6 +30,7 @@ export default function YearCompare({ period }: { period?: Period | null }) {
   const [rows, setRows] = useState<Y[] | null>(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [attempt, setAttempt] = useState(0); // bazaga ulanish vaqtincha uzilsa — qayta urinish
   const metric = S.metr; // Reyslar / Yoʻlovchilar / Yuk — sahifadagi barcha pastki kartalar bilan umumiy
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function YearCompare({ period }: { period?: Period | null }) {
       if (!r.ok) throw new Error(j.error || "Xato " + r.status);
       return j;
     };
+    let retryT: ReturnType<typeof setTimeout> | undefined;
     const y1 = Y0 - 1, y2 = Y0 - 2;
     (async () => {
       try {
@@ -58,12 +60,12 @@ export default function YearCompare({ period }: { period?: Period | null }) {
           { year: Y0, ytd: nz(A.a), full: null, daily: A.kunlar?.a || [] },
         ]);
       } catch (e: any) {
-        if (e?.name !== "AbortError") setErr(e?.message || "Xato");
+        if (e?.name !== "AbortError") { setErr(e?.message || "Xato"); if (attempt < 2) retryT = setTimeout(() => setAttempt((x) => x + 1), 3000 * (attempt + 1)); }
       }
       if (!ac.signal.aborted) setLoading(false);
     })();
-    return () => { clearTimeout(h0); ac.abort(); };
-  }, [today, S.ap, Y0]);
+    return () => { clearTimeout(h0); clearTimeout(retryT); ac.abort(); };
+  }, [today, S.ap, Y0, attempt]);
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return null;
   const cargo = (x: any) => (x ? T((x.yuk || 0) + (x.poc || 0)) : null);
@@ -83,14 +85,14 @@ export default function YearCompare({ period }: { period?: Period | null }) {
   return (
     <Card title={<span className="rng__ttl">{ICONS.calendar}Yillar boʻyicha solishtirish</span>}
       hint={`Oʻtgan yillar — toʻliq yil boʻyicha, joriy yil — 1-yanvardan ${upTo} sanagacha. Joriy yilning oʻtgan yillar bilan solishtirishi aynan shu sanagacha hisoblanadi.`}>
-      {err ? <p className="rng__err">{err}</p> : null}
+      {err ? <p className="rng__err">{err} <button type="button" className="yc__retry" onClick={() => setAttempt((x) => x + 1)}>Qayta urinish</button></p> : null}
       {!rows && !err ? <div className="vg__none">{loading ? "Bazadan hisoblanmoqda…" : ""}</div> : null}
       {rows ? (
         <div className={"rng__res" + (loading ? " is-loading" : "")}>
           <div className="yc__grid">
             {[r2, r1, r0].map((r, i) => {
               const cur = r.year === r0.year, prev = i > 0 ? [r2, r1, r0][i - 1] : null;
-              const v = (x: any) => (x ? x.baj : 0); // kartalarda asosiy koʻrsatkich — reyslar; qolganlari pastdagi jadvalda
+              const v = (x: any) => (x ? x.pax : 0); // kartalarda asosiy koʻrsatkich — yoʻlovchilar; qolganlari pastdagi jadvalda
               // tanlangan davr bitta yil ichida boʻlsa — aynan shu yil kartasida koʻrsatiladi; boshqa kartalar oʻz holicha
               const sel = !!period && period.from.slice(0, 4) === String(r.year) && period.to.slice(0, 4) === String(r.year);
               const cd = sel ? period!.a : cur ? r.ytd : r.full;
@@ -106,7 +108,7 @@ export default function YearCompare({ period }: { period?: Period | null }) {
               return (
                 <div key={r.year} className={"yc__card" + (cur || sel ? " yc__card--cur" : "")}>
                   <div className="yc__head"><b>{r.year}</b>{sel ? null : <span className="yc__tag">{cur ? "Hozircha" : "Butun yil"}</span>}</div>
-                  <div className="yc__big">{N(v(cd))}<small>reys</small></div>
+                  <div className="yc__big">{N(v(cd))}<small>yoʻlovchi</small></div>
                   <div className="yc__range">{sel ? dmy(period!.from) + " – " + dmy(period!.to) : cur ? "01.01 – " + upTo : "01.01 – 31.12"}</div>
                   {sel ? (
                     <div className="yc__vs">
@@ -120,7 +122,7 @@ export default function YearCompare({ period }: { period?: Period | null }) {
                     </div>
                   ) : (
                     <div className="yc__vs">
-                      {prev ? <div className="yc__vsrow"><span>{"vs " + prev.year}</span><Delta big cur={v(r.full)} prev={v(prev.full)} /></div> : null}
+                      {prev ? <div className="yc__vsrow"><span>{"vs " + prev.year}</span><Delta big cur={v(r.full)} prev={v(prev.full)} /></div> : <div className="yc__vsrow"><span style={{ minWidth: 0 }}>Oldingi yil maʼlumoti bazada yoʻq</span></div>}
                     </div>
                   )}
                   <div className="yc__mini">

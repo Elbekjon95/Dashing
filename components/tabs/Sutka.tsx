@@ -63,7 +63,6 @@ export default function Sutka() {
     <>
       <div className="sut__head" id="sutka">
         <h2>{ICONS.activity}Joriy sutka <small>{s.bugun} · {tas} Toshkent vaqti ({s.hozir} UTC) holatiga</small></h2>
-        <p>Barcha aeroportlar boʻyicha · rahbariyat (Grafana) dashboardi bilan bir xil hisob: UTC kuni, bekorlarsiz, LDM boʻyicha yoʻlovchilar. Aeroport tanlovi bu boʻlimga taʼsir qilmaydi.</p>
       </div>
 
       <div className="sut">

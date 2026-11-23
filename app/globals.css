@@ -91,7 +91,13 @@ button { cursor: pointer; }
 .vg__delta.big { font-size: 14px; padding: 3px 11px; }
 .vg__delta--up { background: #e3f7ee; color: #12805a; border: 1px solid #bfe9d6; }
 .vg__delta--down { background: #fde8e7; color: #b03a36; border: 1px solid #f6c4c2; }
-.vg__delta--same, .vg__delta--new { background: #eef2f3; color: var(--v-muted); border: 1px solid var(--v-line); }
+.vg__delta--same { background: #eef2f3; color: var(--v-muted); border: 1px solid var(--v-line); }
+/* «yangi» belgisi boʻlgan qator — butun qator yashil ingichka aylana (kapsula) bilan oʻraladi */
+.vg__delta--new { background: #eef2f3; color: var(--v-muted); border: 1px solid var(--v-line); }
+.vg__table tbody tr:has(.vg__delta--new) td { box-shadow: inset 0 1px 0 #12805a, inset 0 -1px 0 #12805a; }
+.vg__table tbody tr:has(.vg__delta--new) td:first-child { box-shadow: inset 0 1px 0 #12805a, inset 0 -1px 0 #12805a, inset 1px 0 0 #12805a; border-radius: 999px 0 0 999px; }
+.vg__table tbody tr:has(.vg__delta--new) td:last-child { box-shadow: inset 0 1px 0 #12805a, inset 0 -1px 0 #12805a, inset -1px 0 0 #12805a; border-radius: 0 999px 999px 0; }
+.sx__tr:has(.vg__delta--new) { box-shadow: inset 0 0 0 1px #12805a; border-radius: 999px; }
 
 .vg__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px; }
 .vg__stat { background: var(--v-card); border: 1px solid var(--v-line); border-radius: 18px; padding: 14px 16px; box-shadow: 0 6px 20px rgba(15, 80, 72, 0.07); min-width: 0; }
@@ -252,7 +258,16 @@ svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: va
 .uzm__tile strong small { font-size: 12px; font-weight: 600; color: var(--v-muted); }
 .uzm__tile-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .uzm__tile-foot em { font-style: normal; font-size: 11px; color: var(--v-faint); }
-.uzm__bar { fill: #0f766e; } .uzm__bar:hover { fill: #2a9d8f; }
+.uzm__bar { fill: #0f766e; transition: fill .12s; }
+.uzm__hit { fill: transparent; }
+.uzm__col .uzm__tip { opacity: 0; transition: opacity .1s; }
+.uzm__col:hover .uzm__tip { opacity: 1; }
+.uzm__col:hover .uzm__hit { fill: rgba(15, 118, 110, 0.1); }
+.uzm__col:hover .uzm__bar { fill: #1fb39f; }
+.uzm__tip rect { fill: #0b3d38; stroke: rgba(190, 240, 226, 0.35); stroke-width: 1; }
+.uzm__tip text { font-family: inherit; }
+.uzm__tip .uzm__tip-d { fill: #9fd6c9; font-size: 12px; font-weight: 600; }
+.uzm__tip .uzm__tip-v { fill: #fff; font-size: 16px; font-weight: 800; }
 .uzm__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .uzm__facts > div { display: flex; flex-direction: column; gap: 3px; background: rgba(15, 118, 110, 0.06); border: 1px solid var(--v-line); border-radius: 12px; padding: 9px 12px; }
 .uzm__facts span { font-size: 11.5px; color: var(--v-muted); font-weight: 600; }
@@ -668,3 +683,5 @@ body { background: var(--page); }
 .rng__presets button:disabled, .rng__row input:disabled { cursor: not-allowed; }
 .rng__presets button:disabled:hover { background: rgba(255, 255, 255, 0.7); }
 .yc__ct { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.yc__retry { margin-left: 8px; border: 1px solid var(--v-line); background: #fff; border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 650; color: var(--v-deep); cursor: pointer; }
+.rng__nocmp { font-size: 12.5px; color: var(--v-faint); }

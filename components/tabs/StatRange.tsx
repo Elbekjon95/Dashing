@@ -33,7 +33,7 @@ const DATA_START = "2024-01-01"; // bazadagi eng birinchi reys sanasi
 
 type Res = { a: any; b: any; kunlar: { a: any[]; b: any[] }; ak: any[]; yon: any[]; ap: any[]; sabab: any[]; hozir: string };
 
-export default function StatRange() {
+export default function StatRange({ children }: { children?: React.ReactNode }) {
   const { D, S } = useDash();
   const { akName, placeName, apLabel, dDesc } = useLookups();
   const today = todayStr(D);
@@ -95,7 +95,7 @@ export default function StatRange() {
     if (m === "preset") pick(PRESETS.find((p) => p.id === "yil") || PRESETS[0]); else setPreset("");
   };
   // sana maydoni uncontrolled: kiritish paytida qayta chizilmaydi, shuning uchun kun → oy → yil ketma-ket oʻtadi
-  const onDate = (set: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => { const v = e.target.value; if (/^d{4}-d{2}-d{2}$/.test(v)) set(v); };
+  const onDate = (set: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => { const v = e.target.value; if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(v)) set(v); };
   const a = nz(res?.a), b = nz(res?.b);
   const otp = (x: any) => (x && x.ms ? (x.ot / x.ms) * 100 : null);
   const t = (x: any, k: string) => T((x?.[k] || 0));
@@ -105,7 +105,10 @@ export default function StatRange() {
 
   // davr bitta yil ichida boʻlsa (oxirgi 3 yildan biri) — shu yil kartasida; aks holda (yillar oraligʻi) — tepada alohida kartalar
   const yF = dn.from.slice(0, 4), yT = dn.to.slice(0, 4), Y0 = +today.slice(0, 4);
-  const topCards = yF !== yT || +yF < Y0 - 2 || +yF > Y0;
+  const custom = mode === "custom"; // maxsus oraliq: butun boʻlim faqat shu oraliq maʼlumotlarini koʻrsatadi
+  const noCmp = !b.baj && !b.pax; // solishtirish davrida reys yoʻq (masalan, 2024-yildan oldin)
+  const noCmpTxt = <span className="rng__nocmp">solishtirish davrida maʼlumot yoʻq</span>;
+  const topCards = custom || yF !== yT || +yF < Y0 - 2 || +yF > Y0;
 
   const pct = (c: number, p: number) => (p ? <Delta cur={c} prev={p} /> : "—");
   const tbl = (rows: any[], name: (k: string) => any, key: "baj" | "pax" | "n", head: string) => (
@@ -144,9 +147,9 @@ export default function StatRange() {
             <label>Tugashi<input key={"t" + sync} type="date" defaultValue={to} min={DATA_START} max={today} disabled={mode === "preset"} onChange={onDate(setTo)} /></label>
           </div>
           <p className="rng__sum">
-            {valid ? <><b>Joriy:</b> {dmy(from)} – {dmy(to)} ({nA} kun{to >= today ? ", bugun kiradi — kun tugallanmagan" : ""}) &nbsp;·&nbsp; <b>Solishtirish:</b> {dmy(cmp[0])} – {dmy(cmp[1])} ({nB} kun)</> : ms(from) > ms(to) ? "Boshlanish sanasi tugash sanasidan keyin boʻlmasin" : to < DATA_START ? "Bazada maʼlumot " + dmy(DATA_START) + " dan boshlab mavjud — bu davrda reyslar yoʻq" : "Sanalarni toʻgʻri tanlang"}
+            {valid ? <><b>Joriy:</b> {dmy(from)} – {dmy(to)} ({nA} kun{to >= today ? ", bugun kiradi — kun tugallanmagan" : ""}) &nbsp;·&nbsp; <b>Solishtirish:</b> {dmy(cmp[0])} – {dmy(cmp[1])} ({nB} kun)</> : ms(from) > ms(to) ? "Boshlanish sanasi tugash sanasidan keyin boʻlmasin" : to < DATA_START ? "2024-yildan oldingi maʼlumotlar yoʻq" : "Sanalarni toʻgʻri tanlang"}
             {S.ap !== "ALL" ? <> &nbsp;·&nbsp; <b>Aeroport:</b> {apLabel(S.ap)}</> : null}
-            {valid && from < DATA_START ? <span className="rng__warn"> · maʼlumot {dmy(DATA_START)} dan boshlanadi, undan oldingi kunlar boʻsh</span> : null}
+            {valid && from < DATA_START ? <span className="rng__warn"> · 2024-yildan oldingi maʼlumotlar yoʻq</span> : valid && cmp[0] < DATA_START ? <span className="rng__warn"> · solishtirish davri 2024-yildan oldin — u yerda maʼlumot yoʻq</span> : null}
             {nA !== nB && valid ? <span className="rng__warn"> · davrlar uzunligi har xil ({nA} va {nB} kun)</span> : null}
           </p>
           {err ? <p className="rng__err">{err}</p> : null}
@@ -155,14 +158,14 @@ export default function StatRange() {
 
       {res && topCards ? (
         <Stats list={[
-          { l: "Reyslar", v: N(a.baj), r: <><Delta big cur={a.baj} prev={b.baj} /> edi {N(b.baj)}</>, s: "rejada " + N(a.rej) + " · bekor " + N(a.bek) + " · kuniga " + N1(a.baj / rA) },
-          { l: "Yoʻlovchilar", v: N(a.pax), r: <><Delta big cur={a.pax} prev={b.pax} /> edi {N(b.pax)}</>, s: "uchish " + N(a.pax_dep) + " · qoʻnish " + N(a.pax_arr) },
-          { l: "Yuk aylanmasi", v: N1(t(a, "yuk") + t(a, "poc")), u: "t", r: <><Delta big cur={a.yuk + a.poc} prev={b.yuk + b.poc} /> edi {N1(t(b, "yuk") + t(b, "poc"))} t</>, s: "yuk " + N1(t(a, "yuk")) + " t · pochta " + N1(t(a, "poc")) + " t · bagaj " + N1(t(a, "bag")) + " t" },
-          { l: "Oʻz vaqtida uchish", v: P(a.ms ? a.ot / a.ms : null), r: otp(a) != null && otp(b) != null ? <><Delta big pp cur={otp(a)} prev={otp(b)} /> edi {P(b.ms ? b.ot / b.ms : null)}</> : null, s: N(a.dl) + " ta uchish 15 daqiqadan koʻp kechikkan · yoqilgʻi " + N1(t(a, "yoq")) + " t" },
+          { l: "Reyslar", v: N(a.baj), r: noCmp ? noCmpTxt : <><Delta big cur={a.baj} prev={b.baj} /> edi {N(b.baj)}</>, s: "rejada " + N(a.rej) + " · bekor " + N(a.bek) + " · kuniga " + N1(a.baj / rA) },
+          { l: "Yoʻlovchilar", v: N(a.pax), r: noCmp ? noCmpTxt : <><Delta big cur={a.pax} prev={b.pax} /> edi {N(b.pax)}</>, s: "uchish " + N(a.pax_dep) + " · qoʻnish " + N(a.pax_arr) },
+          { l: "Yuk aylanmasi", v: N1(t(a, "yuk") + t(a, "poc")), u: "t", r: noCmp ? noCmpTxt : <><Delta big cur={a.yuk + a.poc} prev={b.yuk + b.poc} /> edi {N1(t(b, "yuk") + t(b, "poc"))} t</>, s: "yuk " + N1(t(a, "yuk")) + " t · pochta " + N1(t(a, "poc")) + " t · bagaj " + N1(t(a, "bag")) + " t" },
+          { l: "Oʻz vaqtida uchish", v: P(a.ms ? a.ot / a.ms : null), r: noCmp ? noCmpTxt : otp(a) != null && otp(b) != null ? <><Delta big pp cur={otp(a)} prev={otp(b)} /> edi {P(b.ms ? b.ot / b.ms : null)}</> : null, s: N(a.dl) + " ta uchish 15 daqiqadan koʻp kechikkan · yoqilgʻi " + N1(t(a, "yoq")) + " t" },
         ]} />
       ) : null}
 
-      <YearCompare period={res ? ({ a, b, from: dn.from, to: dn.to, cf: dn.cf, ct: dn.ct } as Period) : null} />
+      {!custom ? <YearCompare period={res ? ({ a, b, from: dn.from, to: dn.to, cf: dn.cf, ct: dn.ct } as Period) : null} /> : null}
 
       {!res && !err ? <div className="vg__none">{loading ? "Bazadan hisoblanmoqda…" : "Davr tanlang"}</div> : null}
 
@@ -178,6 +181,8 @@ export default function StatRange() {
           <p className="rng__note">Hisoblangan vaqt: {res.hozir} UTC · {OY_T[+today.slice(5, 7) - 1]} {today.slice(0, 4)}. Joriy davr bugunni oʻz ichiga olsa, raqamlar har 5 daqiqada yangilanadi.</p>
         </div>
       ) : null}
+
+      {!custom ? children : null}
     </>
   );
 }

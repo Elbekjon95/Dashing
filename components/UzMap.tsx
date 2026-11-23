@@ -210,12 +210,20 @@ function Detail(p: { a: Ap; pr: ReturnType<typeof periods>; k: string; unit: str
           {days.map((d, i) => {
             const h = (vals[i] / mx) * (H - 6);
             return (
-              <g key={d}>
-                {vals[i] > 0 ? (
-                  <rect x={i * slot + 1.5} y={H - h} width={Math.max(2, slot - 3)} height={h} rx="2.5" className="uzm__bar">
-                    <title>{d.slice(8) + "." + d.slice(5, 7) + ": " + showV(vals[i], k) + " " + unit}</title>
-                  </rect>
-                ) : null}
+              <g key={d} className="uzm__col">
+                <rect x={i * slot} y={0} width={slot} height={H} className="uzm__hit" />
+                {vals[i] > 0 ? <rect x={i * slot + 1.5} y={H - h} width={Math.max(2, slot - 3)} height={h} rx="2.5" className="uzm__bar" /> : null}
+                {(() => {
+                  // tez va katta tooltip: sichqoncha ustuncha ustiga kelishi bilan darhol chiqadi
+                  const tw = 118, th = 46, cx = i * slot + slot / 2, tx = Math.min(Math.max(0, cx - tw / 2), W - tw), ty = Math.max(2, H - h - th - 8);
+                  return (
+                    <g className="uzm__tip" pointerEvents="none">
+                      <rect x={tx} y={ty} width={tw} height={th} rx="9" />
+                      <text x={tx + tw / 2} y={ty + 17} textAnchor="middle" className="uzm__tip-d">{d.slice(8) + "." + d.slice(5, 7) + "." + d.slice(0, 4)}</text>
+                      <text x={tx + tw / 2} y={ty + 36} textAnchor="middle" className="uzm__tip-v">{showV(vals[i], k) + " " + unit}</text>
+                    </g>
+                  );
+                })()}
                 {i === 0 || i === days.length - 1 || (i + 1) % 5 === 0 ? <text x={i * slot + slot / 2} y={H + 13} textAnchor="middle">{d.slice(8)}</text> : null}
               </g>
             );
