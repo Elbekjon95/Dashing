@@ -660,3 +660,11 @@ body { background: var(--page); }
 .avia__sec h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--v-ink); }
 .avia__sec h3 small { font-size: 12px; font-weight: 500; color: var(--v-muted); margin-left: 6px; }
 .avia__regs { font-size: 12px; line-height: 1.5; color: var(--v-muted); word-break: break-word; }
+.yc__note { margin: 6px 0 0; font-size: 12px; line-height: 1.5; color: var(--v-faint); }
+.rng__mode { display: inline-flex; align-self: flex-start; padding: 3px; gap: 2px; border: 1px solid var(--v-line); border-radius: 999px; background: rgba(255, 255, 255, 0.7); }
+.rng__mode button { border: 0; background: transparent; border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 650; color: var(--v-muted); }
+.rng__mode button.on { background: var(--v-deep); color: #fff; }
+.rng__presets.is-off, .rng__row.is-off { opacity: 0.45; }
+.rng__presets button:disabled, .rng__row input:disabled { cursor: not-allowed; }
+.rng__presets button:disabled:hover { background: rgba(255, 255, 255, 0.7); }
+.yc__ct { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }

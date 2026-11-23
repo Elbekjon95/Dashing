@@ -6,7 +6,7 @@ export const DICT: [string, string, string][] = [
   // ---- menyu va asosiy boʻlimlar
   ["dashbord", "Дашборд", "Dashboard"], ["statistika", "Статистика", "Statistics"], ["kechikishlar", "Задержки", "Delays"],
   ["aviakompaniyalar", "Авиакомпании", "Airlines"], ["yo'nalishlar", "Направления", "Routes"], ["tablo", "Табло", "Board"],
-  ["barcha aeroportlar", "Все аэропорты", "All airports"], ["aeroport", "Аэропорт", "Airport"], ["aeroportlar", "Аэропорты", "Airports"], ["aeroportlar kesimida", "по аэропортам", "by airport"], ["holatiga", "на данный момент", "as of now"],
+  ["barcha aeroportlar", "Все аэропорты", "All airports"], ["aeroport", "Аэропорт", "Airport"], ["aeroportlar", "Аэропорты", "Airports"], ["tanlangan davr", "Выбранный период", "Selected period"], ["tayyor davrlar", "Готовые периоды", "Preset periods"], ["maxsus oraliq", "Свой диапазон", "Custom range"], ["aeroportlar kesimida", "по аэропортам", "by airport"], ["holatiga", "на данный момент", "as of now"],
   ["chiqish", "Выйти", "Sign out"], ["to'liq ekran (f)", "Полный экран (F)", "Full screen (F)"],
   // ---- xarita
   ["o'zbekiston aeroportlari", "Аэропорты Узбекистана", "Uzbekistan airports"], ["o'zbekiston", "Узбекистан", "Uzbekistan"],
