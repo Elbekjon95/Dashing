@@ -27,9 +27,10 @@ const PRESETS: Preset[] = [
   { id: "oy", t: "Joriy oy", r: (t) => [t.slice(0, 8) + "01", t] },
   { id: "ooy", t: "Oʻtgan oy", r: (t) => { const f = new Date(ms(t.slice(0, 8) + "01")); f.setUTCMonth(f.getUTCMonth() - 1); const from = iso(f.getTime()); return [from, addDays(t.slice(0, 8) + "01", -1)]; } },
   { id: "yil", t: "Yil boshidan", r: (t) => [t.slice(0, 4) + "-01-01", t] },
+  { id: "5yil", t: "5 yil", r: (t) => [(+t.slice(0, 4) - 4) + "-01-01", t] },
 ];
 
-const DATA_START = "2024-01-01"; // bazadagi eng birinchi reys sanasi
+const DATA_START = "2021-01-01"; // 5+ yillik maʼlumotlar boshlanishi
 
 type Res = { a: any; b: any; kunlar: { a: any[]; b: any[] }; ak: any[]; yon: any[]; ap: any[]; sabab: any[]; hozir: string };
 
@@ -108,7 +109,7 @@ export default function StatRange({ children }: { children?: React.ReactNode }) 
   const custom = mode === "custom"; // maxsus oraliq: butun boʻlim faqat shu oraliq maʼlumotlarini koʻrsatadi
   const noCmp = !b.baj && !b.pax; // solishtirish davrida reys yoʻq (masalan, 2024-yildan oldin)
   const noCmpTxt = <span className="rng__nocmp">solishtirish davrida maʼlumot yoʻq</span>;
-  const topCards = custom || yF !== yT || +yF < Y0 - 2 || +yF > Y0;
+  const topCards = custom || yF !== yT || +yF < Y0 - 4 || +yF > Y0;
 
   const pct = (c: number, p: number) => (p ? <Delta cur={c} prev={p} /> : "—");
   const tbl = (rows: any[], name: (k: string) => any, key: "baj" | "pax" | "n", head: string) => (
@@ -147,9 +148,9 @@ export default function StatRange({ children }: { children?: React.ReactNode }) 
             <label>Tugashi<input key={"t" + sync} type="date" defaultValue={to} min={DATA_START} max={today} disabled={mode === "preset"} onChange={onDate(setTo)} /></label>
           </div>
           <p className="rng__sum">
-            {valid ? <><b>Joriy:</b> {dmy(from)} – {dmy(to)} ({nA} kun{to >= today ? ", bugun kiradi — kun tugallanmagan" : ""}) &nbsp;·&nbsp; <b>Solishtirish:</b> {dmy(cmp[0])} – {dmy(cmp[1])} ({nB} kun)</> : ms(from) > ms(to) ? "Boshlanish sanasi tugash sanasidan keyin boʻlmasin" : to < DATA_START ? "2024-yildan oldingi maʼlumotlar yoʻq" : "Sanalarni toʻgʻri tanlang"}
+            {valid ? <><b>Joriy:</b> {dmy(from)} – {dmy(to)} ({nA} kun{to >= today ? ", bugun kiradi — kun tugallanmagan" : ""}) &nbsp;·&nbsp; <b>Solishtirish:</b> {dmy(cmp[0])} – {dmy(cmp[1])} ({nB} kun)</> : ms(from) > ms(to) ? "Boshlanish sanasi tugash sanasidan keyin boʻlmasin" : to < DATA_START ? "2021-yildan oldingi maʼlumotlar yoʻq" : "Sanalarni toʻgʻri tanlang"}
             {S.ap !== "ALL" ? <> &nbsp;·&nbsp; <b>Aeroport:</b> {apLabel(S.ap)}</> : null}
-            {valid && from < DATA_START ? <span className="rng__warn"> · 2024-yildan oldingi maʼlumotlar yoʻq</span> : valid && cmp[0] < DATA_START ? <span className="rng__warn"> · solishtirish davri 2024-yildan oldin — u yerda maʼlumot yoʻq</span> : null}
+            {valid && from < DATA_START ? <span className="rng__warn"> · 2021-yildan oldingi maʼlumotlar yoʻq</span> : valid && cmp[0] < DATA_START ? <span className="rng__warn"> · solishtirish davri 2021-yildan oldin — u yerda maʼlumot yoʻq</span> : null}
             {nA !== nB && valid ? <span className="rng__warn"> · davrlar uzunligi har xil ({nA} va {nB} kun)</span> : null}
           </p>
           {err ? <p className="rng__err">{err}</p> : null}

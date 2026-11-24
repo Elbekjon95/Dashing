@@ -1,21 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { useState } from "react";
 import { N, P, N1, sum } from "@/lib/format";
 import { TipRow, dGroup, davrNom, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Card, DataTable, Lines, Rank, Row, Stats, type RankItem } from "../charts";
+import { Card, DataTable, Lines, Rank, Row, Stats, Tabs, type RankItem } from "../charts";
 import { monthLbl, monthTip } from "./Stat";
 
 export default function Kechikish() {
   const { D, S } = useDash();
   const { akName, dDesc } = useLookups();
   const selAp = useSelAp();
+  const [span, setSpan] = useState<"60" | "24">("60");
   const p = S.davr, dn = davrNom(p);
   const av: any[] = selAp(D.aviakompaniyalar || []), kc: any[] = selAp(D.kechikish || []);
   const u = sum(av, "u_" + p), k = sum(av, "k_" + p), b = sum(av, "b_" + p), n = sum(kc, "n_" + p), mn = sum(kc, "m_" + p);
   const noCode = sum(kc.filter((r) => r.kod === "-"), "n_" + p);
 
   const om: any[] = selAp(D.oylik || []);
-  const months = Array.from(new Set(om.map((r) => r.oy as string))).sort().slice(-24);
+  const months = Array.from(new Set(om.map((r) => r.oy as string))).sort().slice(span === "60" ? -60 : -24);
   const otp = (tt: number) => months.map((m) => { const rr = om.filter((r) => r.oy === m && r.tt === tt), bj = sum(rr, "baj"); return bj ? (1 - sum(rr, "k15") / bj) * 100 : null; });
   const ou = otp(1), oq = otp(2), pf = (v: number) => N1(v) + "%";
 
@@ -84,8 +86,9 @@ export default function Kechikish() {
         { l: "Bekor qilingan", v: N(b), s: "uchish va qoʻnish · sababi koʻrsatilmagan kechikishlar: " + N(noCode) },
       ]} />
 
-      <Card title="Oʻz vaqtida bajarilgan reyslar ulushi" hint="Oxirgi 24 oy · rejadan 15 daqiqagacha farq «oʻz vaqtida» hisoblanadi"
-        chart={<Lines labels={months.map(monthLbl)} tips={months.map(monthTip)} fmt={pf} fmtAxis={(v) => N(v) + "%"} zero={false} max={100} h={240} labelW={40} series={[{ name: "Uchish", fill: "teal", values: ou, area: true }, { name: "Qoʻnish", fill: "orange", values: oq }]} />}
+      <Card title="Oʻz vaqtida bajarilgan reyslar ulushi" hint={(span === "60" ? "Oxirgi 60 oy (5 yil)" : "Oxirgi 24 oy") + " · rejadan 15 daqiqagacha farq «oʻz vaqtida» hisoblanadi"}
+        tools={<Tabs options={[["60", "5 yil"], ["24", "24 oy"]]} val={span} onPick={(v) => setSpan(v)} />}
+        chart={<Lines labels={months.map(monthLbl)} tips={months.map(monthTip)} fmt={pf} fmtAxis={(v) => N(v) + "%"} zero={false} max={100} h={240} labelW={40} target={{ value: 90, label: "Maqsad 90%" }} series={[{ name: "Uchish", fill: "teal", values: ou, area: true }, { name: "Qoʻnish", fill: "orange", values: oq }]} />}
         table={<DataTable scroll rows={months.map((_, i) => ({ i })).reverse()} cols={[{ h: "Oy", f: (r) => monthTip(months[r.i]) }, { h: "Uchish", n: true, f: (r) => (ou[r.i] == null ? "—" : pf(ou[r.i] as number)) }, { h: "Qoʻnish", n: true, f: (r) => (oq[r.i] == null ? "—" : pf(oq[r.i] as number)) }]} />} />
 
       <Row cls="vg__row--three">

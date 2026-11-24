@@ -381,7 +381,7 @@ export default function UzMap() {
                 const t = tot[r.iso], has = !!t, sh = has ? shade(t.v, regMax) : 0;
                 return (
                   <path key={r.iso} d={r.d} className={"uzm__region" + (has ? " live" : "") + (pickedReg === r.iso ? " picked" : "") + (hover === r.iso ? " hot" : "")}
-                    style={has ? { fill: `rgba(138,212,196,${(0.14 + 0.66 * sh).toFixed(3)})` } : undefined}
+                    style={has ? { fill: `rgba(59, 130, 246, ${(0.08 + 0.38 * sh).toFixed(3)})` } : undefined}
                     onMouseEnter={() => setHover(r.iso)} onMouseLeave={() => setHover(null)}
                     onClick={has ? () => { const best = t.aps.slice().sort((a, b) => mVal(b.cur, k) - mVal(a.cur, k))[0]; manual(); setCode(best.code); } : undefined}>
                     <title>{REG_NAME[r.iso] + ": " + (has ? showV(t.v, k) + " " + unit : "aeroport yoʻq")}</title>

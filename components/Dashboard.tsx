@@ -6,6 +6,7 @@ import { N } from "@/lib/format";
 import { DEFAULT_STATE, DashCtx, TipCtx, type DashData, type DashState } from "@/lib/dash";
 import { Tabs } from "./charts";
 import { LangSwitch } from "./I18n";
+import UzAirportsLogo from "./UzAirportsLogo";
 import Bugun from "./tabs/Bugun";
 import Stat from "./tabs/Stat";
 import Kechikish from "./tabs/Kechikish";
@@ -31,13 +32,14 @@ function Defs() {
   return (
     <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
       <defs>
-        <linearGradient id="gTeal" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#3fb8a5" /><stop offset="1" stopColor="#0f766e" /></linearGradient>
-        <linearGradient id="gOrange" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#ffd5a8" /><stop offset="1" stopColor="#f08a3c" /></linearGradient>
-        <linearGradient id="gMint" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#cfeee6" /><stop offset="1" stopColor="#8ad4c4" /></linearGradient>
-        <linearGradient id="gGrey" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#e3ebea" /><stop offset="1" stopColor="#b7c4c2" /></linearGradient>
-        <linearGradient id="gRed" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#f3a6a3" /><stop offset="1" stopColor="#d9534f" /></linearGradient>
-        <linearGradient id="gArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2a9d8f" stopOpacity="0.35" /><stop offset="1" stopColor="#2a9d8f" stopOpacity="0" /></linearGradient>
-        <linearGradient id="gArc" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#8ad4c4" /><stop offset="1" stopColor="#ffe2bd" /></linearGradient>
+        <linearGradient id="gTeal" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#3b82f6" /><stop offset="1" stopColor="#1d4ed8" /></linearGradient>
+        <linearGradient id="gOrange" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#e2e8f0" /><stop offset="1" stopColor="#94a3b8" /></linearGradient>
+        <linearGradient id="gMint" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#38bdf8" /><stop offset="1" stopColor="#0284c7" /></linearGradient>
+        <linearGradient id="gBlue" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#818cf8" /><stop offset="1" stopColor="#4f46e5" /></linearGradient>
+        <linearGradient id="gGrey" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#64748b" /><stop offset="1" stopColor="#334155" /></linearGradient>
+        <linearGradient id="gRed" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#f43f5e" /><stop offset="1" stopColor="#be123c" /></linearGradient>
+        <linearGradient id="gArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#3b82f6" stopOpacity="0.24" /><stop offset="1" stopColor="#3b82f6" stopOpacity="0" /></linearGradient>
+        <linearGradient id="gArc" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#3b82f6" /><stop offset="1" stopColor="#93c5fd" /></linearGradient>
         <pattern id="uzm-none" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" className="uzm__hatch" /></pattern>
       </defs>
     </svg>
@@ -50,6 +52,7 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
   const [S, setS] = useState<DashState>(DEFAULT_STATE);
   const [ready, setReady] = useState(false);
   const [kiosk, setKiosk] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [now, setNow] = useState(0);
   const [pulse, setPulse] = useState(0); // yangi maʼlumot kelganda oshadi — porlash effektini ishga tushiradi
   const [tip, setTip] = useState<{ content: ReactNode; x: number; y: number } | null>(null);
@@ -67,12 +70,14 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
     const hm = location.hash.match(/tab=(\w+)/); if (hm) init.tab = hm[1];
     const ham = location.hash.match(/ap=(\w+)/); if (ham) init.ap = ham[1];
     setS(init);
+    try { const th = localStorage.getItem("dash.theme"); if (th === "light" || th === "dark") setTheme(th); } catch {}
     setKiosk(/(^|[#&])tv\b/.test(location.hash));
     setNow(Date.now());
     setReady(true);
     if (/(^|[#&])glow\b/.test(location.hash)) setTimeout(() => setPulse((x) => x + 1), 900); // #glow — effektni koʻrsatib berish uchun
   }, []);
   useEffect(() => { if (kiosk) document.documentElement.classList.add("kiosk"); else document.documentElement.classList.remove("kiosk"); }, [kiosk]);
+  useEffect(() => { document.documentElement.dataset.theme = theme; try { localStorage.setItem("dash.theme", theme); } catch {} }, [theme]);
 
   const set = useCallback((p: Partial<DashState>) => {
     setS((s) => {
@@ -190,12 +195,23 @@ export default function Dashboard({ isAdmin = false }: { isAdmin?: boolean }) {
       <div id="app" ref={appEl}>
         <section className="vg">
           <div className="vg__bar">
+            <div className="vg__brand">
+              <UzAirportsLogo variant="full" className="vg__brand-logo" />
+              <div className="vg__brand-sub"><i className="vg__live" aria-hidden="true" /><span>Situation Dashboard</span></div>
+            </div>
             <nav className="vg__nav">
               {TABS.map((t) => (
                 <button key={t.id} type="button" className={t.id === cur.id ? "on" : ""} onClick={() => { setTip(null); window.scrollTo(0, 0); set({ tab: t.id }); }}>{t.t}</button>
               ))}
             </nav>
             <div className="vg__bar-right">
+              <button type="button" className="tvbtn" title={theme === "dark" ? "Yorugʻ rejim" : "Toʻq rejim"} aria-label={theme === "dark" ? "Yorugʻ rejim" : "Toʻq rejim"} onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}>
+                {theme === "dark" ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2m-7.07-15.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m12.73-12.73 1.41-1.41" /></svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+                )}
+              </button>
               <button type="button" className="tvbtn" title="Toʻliq ekran rejimi" aria-label="Toʻliq ekran rejimi" onClick={enterTv}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
               </button>

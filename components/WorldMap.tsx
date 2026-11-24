@@ -140,8 +140,8 @@ export default function WorldMap({ homes, pairs, hub, unit = "reys", aspect = 2.
     <div ref={ref} className="wmapw">
       <svg ref={svgRef} className={"wmap__svg" + (cur.z > 1 ? " zoomed" : "") + (grab ? " grab" : "")} viewBox={vb.join(" ")} width={W} height={H} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
         <defs>
-          <radialGradient id="wmBub" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#e9fff9" stopOpacity="0.95" /><stop offset="0.6" stopColor="#8ad4c4" stopOpacity="0.85" /><stop offset="1" stopColor="#2a9d8f" stopOpacity="0.8" /></radialGradient>
-          <radialGradient id="wmHome" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="#ff9a4d" stopOpacity="0.55" /><stop offset="1" stopColor="#ff9a4d" stopOpacity="0" /></radialGradient>
+          <radialGradient id="wmBub" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#eff6ff" stopOpacity="0.98" /><stop offset="0.55" stopColor="#3b82f6" stopOpacity="0.9" /><stop offset="1" stopColor="#1d4ed8" stopOpacity="0.82" /></radialGradient>
+          <radialGradient id="wmHome" cx="50%" cy="50%" r="50%"><stop offset="0" stopColor="#93c5fd" stopOpacity="0.55" /><stop offset="1" stopColor="#93c5fd" stopOpacity="0" /></radialGradient>
         </defs>
         <rect className="wmap__sea" x={0} y={0} width={360} height={140} />
         <g className="wmap__grat" strokeWidth={0.6 * k}>

@@ -3,7 +3,7 @@
 import { AP_FULL, AP_LIST } from "@/lib/static";
 import { N, N1, P, T, sum } from "@/lib/format";
 import { Delta, PlaneIcon, StatusPill, todayStr, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Bars, Card, DataTable, Donut, Lines, Rank, Row, type Col } from "../charts";
+import { Bars, Card, DataTable, Donut, Gauge, Lines, Rank, Row, Stats, type Col } from "../charts";
 import UzMap from "../UzMap";
 import Sutka from "./Sutka";
 
@@ -18,12 +18,12 @@ export default function Bugun() {
     ["rej", "bek", "baj", "k15", "kd", "pax", "yuk", "poc", "bag", "hz_baj", "hz_pax"].forEach((f) => { o[f] = sum(rows, f); });
     return o;
   };
-  const Tb = agg("bugun"), U = agg("bugun", 1), Q = agg("bugun", 2);
+  const Tb = agg("bugun"), U = agg("bugun", 1), Q = agg("bugun", 2), Kc = agg("kecha");
   const tb: any[] = selAp(D.tablo || []);
   const cnt = (h: string) => tb.filter((r) => r.holat === h).length;
   const otp = U.baj ? 1 - U.k15 / U.baj : null;
-  const R = 38, Cc = 2 * Math.PI * R, pct = otp == null ? null : Math.round(otp * 100);
-  const lb: [string, number, string][] = [["Qoʻnishlar", Q.baj, "#2a9d8f"], ["Uchishlar", U.baj, "#8ad4c4"], ["Charterlar", tb.filter((r) => r.st === "C").length, "#ffc48a"], ["Bekorlar", Tb.bek, "#d9534f"]];
+  const pct = otp == null ? null : Math.round(otp * 100);
+  const lb: [string, number, string][] = [["Qoʻnishlar", Q.baj, "var(--c-pri)"], ["Uchishlar", U.baj, "var(--c-sec)"], ["Charterlar", tb.filter((r) => r.st === "C").length, "#818cf8"], ["Bekorlar", Tb.bek, "#f43f5e"]];
   const nx = tb.filter((r) => r.tt === 2 && (r.holat === "kutilmoqda" || r.holat === "kechikmoqda")).sort((a, b) => (a.est || a.sch).localeCompare(b.est || b.sch))[0];
 
   // soatlar
@@ -36,11 +36,27 @@ export default function Bugun() {
     dep.push(sum(bt.filter((r) => r.tt === 1), (r) => r.rej - r.bek));
   }
   const hrTips = hrs.map((x) => x + ":00 – " + x + ":59");
+  const nowHour = /^\d{2}:\d{2}/.test(String(D?.sutka?.hozir || "")) ? +String(D.sutka.hozir).slice(0, 2) : new Date().getUTCHours();
 
-  // kunlar
-  const kl = selAp(D.kunlik || []), byD: Record<string, number> = {}, today = todayStr(D);
-  kl.forEach((r) => { if (r.kun < today) byD[r.kun] = (byD[r.kun] || 0) + r.baj; });
-  const days = Object.keys(byD).sort().slice(-7), dv = days.map((d) => byD[d]);
+  // kunlar (14 kun sparkline uchun, 7 kun grafik uchun)
+  const kl = selAp(D.kunlik || []), byD: Record<string, number> = {}, byPax: Record<string, number> = {}, byYuk: Record<string, number> = {}, byOtp: Record<string, { b: number; k: number }> = {}, today = todayStr(D);
+  kl.forEach((r) => {
+    if (r.kun >= today) return;
+    byD[r.kun] = (byD[r.kun] || 0) + r.baj;
+    byPax[r.kun] = (byPax[r.kun] || 0) + r.pax;
+    byYuk[r.kun] = (byYuk[r.kun] || 0) + T((r.yuk || 0) + (r.poc || 0));
+    if (r.tt === 1) {
+      byOtp[r.kun] = byOtp[r.kun] || { b: 0, k: 0 };
+      byOtp[r.kun].b += r.baj || 0;
+      byOtp[r.kun].k += r.k15 || 0;
+    }
+  });
+  const days14 = Object.keys(byD).sort().slice(-14);
+  const days = days14.slice(-7), dv = days.map((d) => byD[d]);
+  const spFlt = days14.map((d) => byD[d] || 0);
+  const spPax = days14.map((d) => byPax[d] || 0);
+  const spYuk = days14.map((d) => byYuk[d] || 0);
+  const spOtp = days14.map((d) => (byOtp[d]?.b ? (1 - byOtp[d].k / byOtp[d].b) * 100 : 90));
 
   // yoʻnalish / aviakompaniya
   const dests: Record<string, number> = {}, aks: Record<string, number> = {};
@@ -69,17 +85,18 @@ export default function Bugun() {
 
   return (
     <>
+      <Stats list={[
+        { l: "Bugungi reyslar", v: N(Tb.baj), r: Kc.hz_baj ? <Delta cur={Tb.baj} prev={Kc.hz_baj} /> : null, s: "rejada " + N(Tb.rej) + " · bekor " + N(Tb.bek), spark: spFlt, sparkColor: "#3b82f6" },
+        { l: "Yoʻlovchilar", v: N(Tb.pax), r: Kc.hz_pax ? <Delta cur={Tb.pax} prev={Kc.hz_pax} /> : null, s: "uchish " + N(U.pax) + " · qoʻnish " + N(Q.pax), spark: spPax, sparkColor: "#93c5fd" },
+        { l: "Yuk va pochta", v: N1(T(Tb.yuk + Tb.poc)), u: "t", s: "bagaj " + N1(T(Tb.bag)) + " t", spark: spYuk, sparkColor: "#38bdf8" },
+        { l: "Oʻz vaqtida uchish", v: P(otp), s: N(U.k15) + " ta uchish kechikkan (15+ daq)", spark: spOtp, sparkColor: "#60a5fa" },
+      ]} />
       <UzMap />
       <Sutka />
       <Row cls="vg__row--three">
         <Card title="Bugun oʻz vaqtida" hint="Uchishlar: rejadan 15 daqiqagacha">
           <div className="vg__load">
-            <svg viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(15,118,110,0.14)" strokeWidth="9" />
-              {pct != null ? <circle cx="50" cy="50" r={R} fill="none" stroke="#2a9d8f" strokeWidth="9" strokeLinecap="round" strokeDasharray={`${((pct / 100) * Cc).toFixed(1)} ${Cc.toFixed(1)}`} transform="rotate(-90 50 50)" /> : null}
-              <text x="50" y="52" textAnchor="middle" style={{ fontSize: 19, fontWeight: 700, fill: "#0f2a2b" }}>{pct == null ? "—" : pct + "%"}</text>
-              <text x="50" y="65" textAnchor="middle" style={{ fontSize: 8 }}>oʻz vaqtida</text>
-            </svg>
+            <Gauge pct={pct} color="var(--c-pri)" />
             <ul className="vg__load-bars">
               {lb.map((x) => (
                 <li key={x[0]}>
@@ -103,20 +120,20 @@ export default function Bugun() {
           )}
         </Card>
         <Card title="Reyslar holati" hint="Bugun rejadagi barcha reyslar">
-          <Donut parts={[{ label: "Bajarildi", value: cnt("bajarildi"), color: "#0f766e" }, { label: "Reja boʻyicha", value: cnt("kutilmoqda"), color: "#8ad4c4" }, { label: "Kechikmoqda", value: cnt("kechikmoqda"), color: "#f08a3c" }, { label: "Bekor qilindi", value: cnt("bekor"), color: "#d9534f" }]} total={tb.length} caption="reys" />
+          <Donut parts={[{ label: "Bajarildi", value: cnt("bajarildi"), color: "var(--c-pri)" }, { label: "Reja boʻyicha", value: cnt("kutilmoqda"), color: "var(--c-sec)" }, { label: "Kechikmoqda", value: cnt("kechikmoqda"), color: "#818cf8" }, { label: "Bekor qilindi", value: cnt("bekor"), color: "#f43f5e" }]} total={tb.length} caption="reys" />
         </Card>
       </Row>
 
       <Row cls="vg__row--charts">
         <Card title="Soatlar boʻyicha harakat" hint="Bugun har soatda (UTC) nechta qoʻnish va uchish (rejadagi, bekorlarsiz)"
-          chart={<Bars labels={hrs} tips={hrTips} series={[{ name: "Qoʻnishlar", fill: "teal", values: arr }, { name: "Uchishlar", fill: "orange", values: dep }]} fmt={N} h={230} labelW={34} />}
+          chart={<Bars labels={hrs} tips={hrTips} nowIdx={nowHour} series={[{ name: "Qoʻnishlar", fill: "teal", values: arr }, { name: "Uchishlar", fill: "orange", values: dep }]} fmt={N} h={230} labelW={34} />}
           table={<DataTable scroll rows={hrs.map((_, i) => ({ h: hrTips[i], a: arr[i], d: dep[i] }))} cols={[{ h: "Soat", f: (r) => r.h }, { h: "Qoʻnish", n: true, f: (r) => N(r.a) }, { h: "Uchish", n: true, f: (r) => N(r.d) }]} />} />
         <Card title="Kunlar boʻyicha reyslar" hint="Oxirgi 7 kun: qoʻnish va uchish birga"
           chart={
             <>
               <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "-2px 0 6px" }}>
-                <strong style={{ fontSize: 30, fontWeight: 650, letterSpacing: "-.02em" }}>{N(sum(dv, (v) => v))}</strong>
-                <span style={{ color: "#5f7a78", fontSize: 12.5 }}>{"reys 7 kunda · kecha " + N(dv[dv.length - 1])}</span>
+                <strong style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-.02em", color: "var(--v-ink)" }}>{N(sum(dv, (v) => v))}</strong>
+                <span style={{ color: "var(--v-muted)", fontSize: 12.5 }}>{"reys 7 kunda · kecha " + N(dv[dv.length - 1])}</span>
               </div>
               <Lines labels={days.map((d) => d.slice(8, 10) + "." + d.slice(5, 7))} tips={days} series={[{ name: "Reyslar", fill: "teal", values: dv, area: true, dots: true }]} fmt={N} h={196} labelW={44} />
             </>

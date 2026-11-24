@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import { LangSwitch } from "./I18n";
+import UzAirportsLogo from "./UzAirportsLogo";
 
 // Matnlar oʻzbekcha yoziladi; RU/EN tanlansa, sahifa tarjimoni almashtiradi (lib/i18n-dict.ts).
 // setup=true: tizimda hali foydalanuvchi yoʻq — birinchi roʻyxatdan oʻtgan foydalanuvchi admin boʻladi.
@@ -30,10 +31,28 @@ export default function LoginForm({ configured, setup = false }: { configured: b
 
   return (
     <main className="login">
+      <svg className="login__bg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="lgArc1" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#3b82f6" stopOpacity="0" /><stop offset="0.5" stopColor="#3b82f6" stopOpacity="0.45" /><stop offset="1" stopColor="#93c5fd" stopOpacity="0" /></linearGradient>
+          <linearGradient id="lgArc2" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#38bdf8" stopOpacity="0" /><stop offset="0.5" stopColor="#e2e8f0" stopOpacity="0.35" /><stop offset="1" stopColor="#3b82f6" stopOpacity="0" /></linearGradient>
+        </defs>
+        <g fill="none" stroke="rgba(148,163,184,0.14)" strokeWidth="1">
+          <circle cx="720" cy="450" r="180" />
+          <circle cx="720" cy="450" r="290" strokeDasharray="4 6" />
+          <circle cx="720" cy="450" r="410" />
+          <circle cx="720" cy="450" r="540" strokeDasharray="2 8" />
+          <circle cx="720" cy="450" r="680" />
+        </g>
+        <path d="M 110 620 Q 520 340 1320 580" fill="none" stroke="url(#lgArc1)" strokeWidth="1.6" />
+        <path d="M 180 420 Q 720 180 1280 440" fill="none" stroke="url(#lgArc2)" strokeWidth="1.4" />
+        <circle cx="420" cy="410" r="3" fill="#3b82f6" opacity="0.8" />
+        <circle cx="1010" cy="340" r="3.5" fill="#93c5fd" opacity="0.85" />
+        <circle cx="1180" cy="520" r="2.5" fill="#ffffff" opacity="0.7" />
+      </svg>
       <LangSwitch className="login__lang" />
       <form className="login__card" onSubmit={submit} autoComplete="on">
-        <div className="login__logo" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+        <div className="login__logo">
+          <UzAirportsLogo variant="full" />
         </div>
         <h1>{setup ? "Administratorni yaratish" : "Tizimga kirish"}</h1>
         <p className="login__sub">{setup ? "Birinchi foydalanuvchi administrator boʻladi va keyin boshqa foydalanuvchilarni qoʻshadi" : "Aviatsiya operatsion holat paneli"}</p>

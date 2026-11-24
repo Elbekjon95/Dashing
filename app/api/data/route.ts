@@ -1,6 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import { requireAuth } from "@/lib/auth";
 import { dataVersion, dbConfigured, getDbData } from "@/lib/db";
+import { getSimData, simDataVersion } from "@/lib/sim";
 
 export const dynamic = "force-dynamic";
 
@@ -39,14 +40,15 @@ export async function GET(req: Request) {
       dbError = msg(e);
     }
   }
-  // baza sozlanmagan yoki ishlamadi: tayyor fayldan oʻqiymiz
+  // baza sozlanmagan yoki ishlamadi: tayyor fayldan yoki 5 yillik immitatsiya maʼlumotlaridan oʻqiymiz
   try {
     const body = await fromFile();
     if (!dbError) return json(body);
     const d = JSON.parse(body);
     d.meta = { ...(d.meta || {}), xatolar: [`ulanish: ${dbError}`, ...((d.meta && d.meta.xatolar) || [])] };
     return json(JSON.stringify(d));
-  } catch (e) {
-    return Response.json({ error: "Maʼlumot olinmadi", detail: [dbError, msg(e)].filter(Boolean).join(" | ") }, { status: 503 });
+  } catch {
+    if (v && v === simDataVersion()) return Response.json({ unchanged: true }, { headers: { "cache-control": "no-store" } });
+    return json(getSimData());
   }
 }

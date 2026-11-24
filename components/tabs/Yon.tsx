@@ -49,8 +49,8 @@ export default function Yon() {
     <>
       <section className="vg__card vg__globe"><div className="bd"><WorldMap homes={S.ap === "ALL" ? AP_LIST : [S.ap]} pairs={prs} hub={S.ap === "ALL" ? "UZ" : undefined} top={10} unit="yoʻlovchi" fill /></div></section>
       <Stats list={[
-        ...["MVL", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
-        { l: "Yoʻnalishlar", v: N(list.length), r: prevDest ? <><Delta big cur={list.length} prev={prevDest} /> edi {N(prevDest)}</> : null, s: N(Object.keys(byC).length) + " ta davlat · " + dn },
+        ...["MVL", "VVL"].map((y) => { const o = byY[y] || { r: 0, p: 0, pp: 0, rp: 0 }; return { cls: y === "MVL" ? "vg__stat--cyan" : "vg__stat--emerald", l: YON[y] + " reyslar", v: P(o.p / (totP || 1)), r: o.pp ? <><Delta big cur={o.p} prev={o.pp} /> edi {N(o.pp)}</> : null, s: N(o.p) + " yoʻlovchi · " + N(o.r) + " reys · " + dn }; }),
+        { cls: "vg__stat--amber", l: "Yoʻnalishlar", v: N(list.length), r: prevDest ? <><Delta big cur={list.length} prev={prevDest} /> edi {N(prevDest)}</> : null, s: N(Object.keys(byC).length) + " ta davlat · " + dn },
       ]} />
       <Row cls="vg__row--two">
         <Card title="Eng katta yoʻnalishlar" hint={"Yoʻlovchilar boʻyicha top-20 · " + dn}

@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { useState } from "react";
 import { AP_LIST, OY, OY_T } from "@/lib/static";
 import { N, N1, T, sum } from "@/lib/format";
 import { Delta, todayStr, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Bars, Card, DataTable, Lines, Row } from "../charts";
+import { Bars, Card, DataTable, Lines, Row, Tabs } from "../charts";
 import StatRange from "./StatRange";
 
 export const monthLbl = (mo: string) => OY[+mo.slice(5, 7) - 1] + (mo.slice(5, 7) === "01" ? " " + mo.slice(2, 4) : "");
@@ -13,6 +14,7 @@ export default function Stat() {
   const { D, S } = useDash();
   const { apLabel } = useLookups();
   const selAp = useSelAp();
+  const [span, setSpan] = useState<"60" | "24">("60");
 
   const metrVal = (r: any) => (S.metr === "baj" ? r.baj : S.metr === "pax" ? r.pax : T((r.yuk || 0) + (r.poc || 0)));
   const metrNom = S.metr === "baj" ? "Reyslar" : S.metr === "pax" ? "Yoʻlovchilar" : "Yuk va pochta, t";
@@ -21,7 +23,7 @@ export default function Stat() {
   const om: any[] = selAp(D.oylik || []), cy = new Date().getFullYear();
 
 
-  const months = Array.from(new Set(om.map((r) => r.oy as string))).sort().slice(-24);
+  const months = Array.from(new Set(om.map((r) => r.oy as string))).sort().slice(span === "60" ? -60 : -24);
   const yv = (y: string) => months.map((m) => sum(om.filter((r) => r.oy === m && r.yon === y), metrVal));
   const sCIS = yv("CIS"), sMVL = yv("MVL").map((v, i) => v + sCIS[i]), sVVL = yv("VVL"); // MDH xalqaroga kiradi
 
@@ -55,7 +57,8 @@ export default function Stat() {
     <>
       <StatRange>
       <Row cls="vg__row--two">
-        <Card title={metrNom + ": xalqaro va ichki"} hint="Oxirgi 24 oy · oxirgi ustun — joriy oy (toʻliq emas)"
+        <Card title={metrNom + ": xalqaro va ichki"} hint={(span === "60" ? "Oxirgi 60 oy (5 yil)" : "Oxirgi 24 oy") + " · oxirgi ustun — joriy oy (toʻliq emas)"}
+          tools={<Tabs options={[["60", "5 yil"], ["24", "24 oy"]]} val={span} onPick={(v) => setSpan(v)} />}
           chart={<Bars stack labels={months.map(monthLbl)} tips={months.map(monthTip)} fmt={metrFmt} h={250} labelW={34} series={[{ name: "Xalqaro", fill: "teal", values: sMVL }, { name: "Ichki", fill: "orange", values: sVVL }]} />}
           table={<DataTable scroll rows={months.map((_, i) => ({ i })).reverse()} cols={[{ h: "Oy", f: (r) => monthTip(months[r.i]) }, { h: "Xalqaro", n: true, f: (r) => metrFmt(sMVL[r.i]) }, { h: "Ichki", n: true, f: (r) => metrFmt(sVVL[r.i]) }]} />} />
         <Card title="Kun davomida yuklama" hint="Oxirgi 28 kun: har soatda oʻrtacha nechta harakat"

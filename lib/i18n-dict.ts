@@ -210,4 +210,8 @@ export const DICT: [string, string, string][] = [
   ["bort raqamlari","Бортовые номера","Tail numbers"],
   ["takrorlanmas bort raqamlari · ulush — rezident kompaniyalarning barcha samolyotlariga nisbatan:","уникальные бортовые номера · доля — от всех самолётов резидентных компаний:","unique tail numbers · share — of all aircraft of resident airlines:"],
   ["rezident aviakompaniyalar samolyotlari soni","Количество самолётов резидентных авиакомпаний","Number of aircraft of resident airlines"],
+  ["5 yil", "5 лет", "5 years"], ["24 oy", "24 месяца", "24 months"], ["oxirgi 60 oy (5 yil)", "Последние 60 месяцев (5 лет)", "Last 60 months (5 years)"], ["oxirgi 24 oy", "Последние 24 месяца", "Last 24 months"],
+  ["2021-yildan oldingi ma'lumotlar yo'q", "Данных до 2021 года нет", "No data before 2021"], ["solishtirish davri 2021-yildan oldin — u yerda ma'lumot yo'q", "период сравнения до 2021 года — там данных нет", "comparison period is before 2021 — no data there"],
+  ["bugungi reyslar", "рейсы за сегодня", "today's flights"], ["maqsad 90%", "Цель 90%", "Target 90%"], ["yorug' rejim", "Светлая тема", "Light theme"], ["to'q rejim", "Тёмная тема", "Dark theme"], ["ustun", "Столбцы", "Bars"], ["chiziq", "Линия", "Line"],
+  ["uchish va qo'nish balans kesimi", "Баланс вылетов и прилётов", "Departure and arrival balance"], ["yo'nalish turi va operatsion holat", "Тип направлений и операционный статус", "Route mix and operational status"], ["xalqaro (mdh)", "Международные (с СНГ)", "International (incl. CIS)"], ["operatsion holat", "Операционный статус", "Operational status"], ["yo'lovchi / reys", "пасс. / рейс", "pax / flight"], ["t / reys", "т / рейс", "t / flight"],
 ];

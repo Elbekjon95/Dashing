@@ -1,5 +1,6 @@
 import { requireAuth } from "@/lib/auth";
 import { dbConfigured, runParam } from "@/lib/db";
+import { getSimStat } from "@/lib/sim";
 import { AIRPORTS, STAT_SQL } from "@/lib/statsql";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +19,21 @@ const bad = (m: string, status = 400) => Response.json({ error: m }, { status })
 export async function GET(req: Request) {
   const denied = requireAuth(req); // faqat avtorizatsiyadan oʻtganlarga
   if (denied) return denied;
-  if (!dbConfigured()) return bad("Baza sozlanmagan", 503);
   const q = new URL(req.url).searchParams;
   const from = q.get("from") || "", to = q.get("to") || "", cfrom = q.get("cfrom") || "", cto = q.get("cto") || "", ap = (q.get("ap") || "ALL").toUpperCase();
   for (const d of [from, to, cfrom, cto]) if (!DATE.test(d) || isNaN(ms(d))) return bad("Sana formati notoʻgʻri (YYYY-MM-DD)");
   if (ms(from) > ms(to) || ms(cfrom) > ms(cto)) return bad("Boshlanish sanasi tugash sanasidan keyin boʻlmasin");
   if (ap !== "ALL" && !AIRPORTS.includes(ap)) return bad("Aeroport kodi notoʻgʻri");
+
+  if (!dbConfigured()) {
+    const key = ["sim", from, to, cfrom, cto, ap].join("|");
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.at < CACHE_MS) return new Response(hit.body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-cache": "hit" } });
+    const body = JSON.stringify(getSimStat(from, to, cfrom, cto, ap));
+    cache.set(key, { at: Date.now(), body });
+    if (cache.size > 100) cache.delete(cache.keys().next().value as string);
+    return new Response(body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
+  }
 
   const key = [from, to, cfrom, cto, ap].join("|");
   const hit = cache.get(key);

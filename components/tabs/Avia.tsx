@@ -40,7 +40,7 @@ export default function Avia() {
   // bort raqami: UK bilan boshlanadigan haqiqiy roʻyxatdan oʻtish raqami; bazada HY samolyotlari raqamsiz yozilgan ("32028") — ularga UK qoʻshiladi (UK32028)
   const regNo = (c: string) => (/^[0-9]{5}$/.test(c) ? "UK" + c : c);
   // rezident (Oʻzbekiston) aviakompaniyalar: maʼlum kodlar roʻyxati + samolyotlarining koʻpchiligi UK raqamli (kamida 2 ta) boʻlgan kompaniyalar
-  const REZ = new Set(["HY", "C6", "HH", "UH", "2U", "Y3", "Y9", "70Y", "X5", "ATT", "UAT", "HJ", "7Q"]);
+  const REZ = new Set(["HY", "C6", "HH", "UH", "2U", "US", "9S", "Y3", "Y9", "70Y", "X5", "ATT", "UAT", "HJ", "7Q"]);
   const fmt = (() => {
     const m: Record<string, { n: number; uk: number; all: string[] }> = {}, seen = new Set<string>();
     bn.forEach((x) => { const i = x.k.indexOf("|"); const r = regNo(x.k.slice(0, i)), a = x.k.slice(i + 1); if (seen.has(a + "|" + r)) return; seen.add(a + "|" + r); const o = (m[a] = m[a] || { n: 0, uk: 0, all: [] }); o.n++; if (r.startsWith("UK")) o.uk++; o.all.push(r); });

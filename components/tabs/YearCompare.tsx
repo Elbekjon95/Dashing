@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { N, N1, P, T } from "@/lib/format";
 import { Delta, todayStr, useDash } from "@/lib/dash";
-import { Bars, Card, Tabs } from "../charts";
+import { Bars, Card, Lines, Sparkline, Tabs } from "../charts";
 import { OY, OY_T } from "@/lib/static";
 import { ICONS } from "../UzMap";
 
@@ -21,7 +21,7 @@ export type Period = { a: any; b: any; from: string; to: string; cf: string; ct:
 export const ZERO = { baj: 0, rej: 0, bek: 0, pax: 0, pax_dep: 0, pax_arr: 0, yuk: 0, poc: 0, bag: 0, yoq: 0, ms: 0, ot: 0, dl: 0 };
 export const nz = (x: any) => x || ZERO;
 
-type Y = { year: number; ytd: any; full: any; daily: any[] };
+type Y = { year: number; ytd: any; full: any; prevFull?: any; daily: any[] };
 
 export default function YearCompare({ period }: { period?: Period | null }) {
   const { D, S, set } = useDash();
@@ -32,6 +32,7 @@ export default function YearCompare({ period }: { period?: Period | null }) {
   const [loading, setLoading] = useState(false);
   const [attempt, setAttempt] = useState(0); // bazaga ulanish vaqtincha uzilsa — qayta urinish
   const metric = S.metr; // Reyslar / Yoʻlovchilar / Yuk — sahifadagi barcha pastki kartalar bilan umumiy
+  const [chartMode, setChartMode] = useState<"bar" | "line">("bar");
 
   useEffect(() => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return;
@@ -45,16 +46,21 @@ export default function YearCompare({ period }: { period?: Period | null }) {
       return j;
     };
     let retryT: ReturnType<typeof setTimeout> | undefined;
-    const y1 = Y0 - 1, y2 = Y0 - 2;
+    const y1 = Y0 - 1, y2 = Y0 - 2, y3 = Y0 - 3, y4 = Y0 - 4, y5 = Y0 - 5;
     (async () => {
       try {
-        // A: joriy yil (boshidan bugungacha) va oʻtgan yilning shu sanagacha; B: 2 yil oldin shu sanagacha va butun yil; C: oʻtgan yil butun
-        const [A, B, C] = await Promise.all([
+        // 5 yillik solishtirish (y4..Y0 = 2022..2026) va y5 (2021) — birinchi yil uchun o'sish ko'rsatkichi
+        const [A, B, C, D1, D2] = await Promise.all([
           get(Y0 + "-01-01", today, y1 + "-01-01", shiftYear(today, -1)),
           get(y2 + "-01-01", shiftYear(today, -2), y2 + "-01-01", y2 + "-12-31"),
-          get(y1 + "-01-01", y1 + "-12-31", y1 + "-01-01", y1 + "-12-31"),
+          get(y1 + "-01-01", y1 + "-12-31", y3 + "-01-01", y3 + "-12-31"),
+          get(y3 + "-01-01", shiftYear(today, -3), y4 + "-01-01", shiftYear(today, -4)),
+          get(y4 + "-01-01", y4 + "-12-31", y5 + "-01-01", y5 + "-12-31"),
         ]);
+        const p5 = D2.b && (D2.b.baj || D2.b.pax) ? nz(D2.b) : null;
         setRows([
+          { year: y4, ytd: nz(D1.b), full: nz(D2.a), prevFull: p5, daily: D2.kunlar?.a || [] },
+          { year: y3, ytd: nz(D1.a), full: nz(C.b), daily: C.kunlar?.b || [] },
           { year: y2, ytd: nz(B.a), full: nz(B.b), daily: B.kunlar?.b || [] },
           { year: y1, ytd: nz(A.b), full: nz(C.a), daily: C.kunlar?.a || [] },
           { year: Y0, ytd: nz(A.a), full: null, daily: A.kunlar?.a || [] },
@@ -77,7 +83,7 @@ export default function YearCompare({ period }: { period?: Period | null }) {
     return out;
   };
   const mf = (n: number) => (metric === "yuk" ? N1(n) : N(n));
-  const [r2, r1, r0] = rows || [];
+  const [r4, r3, r2, r1, r0] = rows || [];
   const upTo = dm(today);
   const mLabels = OY.slice(0, NM);
   const mTips = OY_T.slice(0, NM).map((m, i) => (i === curM ? m + " (01–" + upTo.slice(0, 2) + " gacha)" : m));
@@ -90,13 +96,15 @@ export default function YearCompare({ period }: { period?: Period | null }) {
       {rows ? (
         <div className={"rng__res" + (loading ? " is-loading" : "")}>
           <div className="yc__grid">
-            {[r2, r1, r0].map((r, i) => {
-              const cur = r.year === r0.year, prev = i > 0 ? [r2, r1, r0][i - 1] : null;
+            {[r4, r3, r2, r1, r0].map((r, i, arr) => {
+              const cur = r.year === r0.year;
+              const prev = i > 0 ? arr[i - 1] : (r.prevFull ? { year: r.year - 1, full: r.prevFull, ytd: r.prevFull } : null);
+              const hasPrevData = !!(prev && (cur ? (prev.ytd?.baj || prev.ytd?.pax) : (prev.full?.baj || prev.full?.pax)));
               const v = (x: any) => (x ? x.pax : 0); // kartalarda asosiy koʻrsatkich — yoʻlovchilar; qolganlari pastdagi jadvalda
               // tanlangan davr bitta yil ichida boʻlsa — aynan shu yil kartasida koʻrsatiladi; boshqa kartalar oʻz holicha
               const sel = !!period && period.from.slice(0, 4) === String(r.year) && period.to.slice(0, 4) === String(r.year);
               const cd = sel ? period!.a : cur ? r.ytd : r.full;
-              const pd = sel ? period!.b : cur ? prev?.ytd : prev?.full;
+              const pd = sel ? period!.b : cur ? prev?.ytd : hasPrevData ? prev?.full : null;
               const diff = (c: number, p: number) => (c - p >= 0 ? "+" : "−") + N(Math.abs(c - p));
               const otp = (x: any) => (x && x.ms ? (x.ot / x.ms) * 100 : null);
               const stats: [string, string, any, any, boolean?][] = [
@@ -110,19 +118,22 @@ export default function YearCompare({ period }: { period?: Period | null }) {
                   <div className="yc__head"><b>{r.year}</b>{sel ? null : <span className="yc__tag">{cur ? "Hozircha" : "Butun yil"}</span>}</div>
                   <div className="yc__big">{N(v(cd))}<small>yoʻlovchi</small></div>
                   <div className="yc__range">{sel ? dmy(period!.from) + " – " + dmy(period!.to) : cur ? "01.01 – " + upTo : "01.01 – 31.12"}</div>
+                  <div className="yc__spark">
+                    <Sparkline values={cur ? byMonth(r).slice(0, curM + 1) : byMonth(r)} color={cur || sel ? "#3b82f6" : "#64748b"} h={26} w={180} />
+                  </div>
                   {sel ? (
                     <div className="yc__vs">
                       <div className="yc__vsrow"><span>{"vs " + dmy(period!.cf) + " – " + dmy(period!.ct)}</span><Delta big cur={v(period!.a)} prev={v(period!.b)} /><em>{diff(v(period!.a), v(period!.b))}</em></div>
                     </div>
                   ) : cur ? (
                     <div className="yc__vs">
-                      {[r1, r2].map((o) => (
+                      {[r1, r2, r3, r4].map((o) => (
                         <div key={o.year} className="yc__vsrow"><span>{"vs " + o.year + " (01.01 – " + upTo + ")"}</span><Delta big cur={v(r0.ytd)} prev={v(o.ytd)} /><em>{diff(v(r0.ytd), v(o.ytd))}</em></div>
                       ))}
                     </div>
                   ) : (
                     <div className="yc__vs">
-                      {prev ? <div className="yc__vsrow"><span>{"vs " + prev.year}</span><Delta big cur={v(r.full)} prev={v(prev.full)} /></div> : <div className="yc__vsrow"><span style={{ minWidth: 0 }}>Oldingi yil maʼlumoti bazada yoʻq</span></div>}
+                      {hasPrevData && prev ? <div className="yc__vsrow"><span>{"vs " + prev.year}</span><Delta big cur={v(r.full)} prev={v(prev.full)} /></div> : <div className="yc__vsrow"><span style={{ minWidth: 0 }}>Oldingi yil maʼlumoti bazada yoʻq</span></div>}
                     </div>
                   )}
                   <div className="yc__mini">
@@ -143,13 +154,28 @@ export default function YearCompare({ period }: { period?: Period | null }) {
           <div className="yc__chart">
             <div className="yc__ct">
               <span>Oylar boʻyicha <small>{"har yil uchun · " + r0.year + " — " + upTo + " gacha"}</small></span>
-              <Tabs options={[["baj", "Reyslar"], ["pax", "Yoʻlovchilar"], ["yuk", "Yuk va pochta"]]} val={metric} onPick={(v) => set({ metr: v })} />
+              <div className="yc__ctrl">
+                <Tabs options={[["bar", "Ustun"], ["line", "Chiziq"]]} val={chartMode} onPick={(v) => setChartMode(v as "bar" | "line")} />
+                <Tabs options={[["baj", "Reyslar"], ["pax", "Yoʻlovchilar"], ["yuk", "Yuk va pochta"]]} val={metric} onPick={(v) => set({ metr: v })} />
+              </div>
             </div>
-            <Bars labels={mLabels} tips={mTips} fmt={mf} fmtAxis={(v) => (metric === "yuk" ? (v >= 1e3 ? N1(v / 1e3) + " ming" : N(v)) : v >= 1e6 ? N1(v / 1e6) + " mln" : v >= 1e3 ? N(v / 1e3) + " ming" : N(v))} h={290} labelW={52} series={[
-              { name: String(r2.year), fill: "grey", values: byMonth(r2) },
-              { name: String(r1.year), fill: "orange", values: byMonth(r1) },
-              { name: String(r0.year), fill: "teal", values: byMonth(r0) },
-            ]} />
+            {chartMode === "bar" ? (
+              <Bars labels={mLabels} tips={mTips} fmt={mf} fmtAxis={(v) => (metric === "yuk" ? (v >= 1e3 ? N1(v / 1e3) + " ming" : N(v)) : v >= 1e6 ? N1(v / 1e6) + " mln" : v >= 1e3 ? N(v / 1e3) + " ming" : N(v))} h={290} labelW={52} series={[
+                { name: String(r4.year), fill: "grey", values: byMonth(r4) },
+                { name: String(r3.year), fill: "blue", values: byMonth(r3) },
+                { name: String(r2.year), fill: "mint", values: byMonth(r2) },
+                { name: String(r1.year), fill: "orange", values: byMonth(r1) },
+                { name: String(r0.year), fill: "teal", values: byMonth(r0) },
+              ]} />
+            ) : (
+              <Lines labels={mLabels} tips={mTips} fmt={mf} fmtAxis={(v) => (metric === "yuk" ? (v >= 1e3 ? N1(v / 1e3) + " ming" : N(v)) : v >= 1e6 ? N1(v / 1e6) + " mln" : v >= 1e3 ? N(v / 1e3) + " ming" : N(v))} h={290} labelW={52} series={[
+                { name: String(r4.year), fill: "grey", values: byMonth(r4), w: 1.8 },
+                { name: String(r3.year), fill: "blue", values: byMonth(r3), w: 1.8 },
+                { name: String(r2.year), fill: "mint", values: byMonth(r2), w: 2 },
+                { name: String(r1.year), fill: "orange", values: byMonth(r1), w: 2.2 },
+                { name: String(r0.year), fill: "teal", values: byMonth(r0).map((val, idx) => (idx <= curM ? val : null)), area: true, dots: true, w: 2.6 },
+              ]} />
+            )}
           </div>
         </div>
       ) : null}
