@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { useState } from "react";
 import { AP_FULL, AP_LIST } from "@/lib/static";
 import { N, N1, P, T, sum } from "@/lib/format";
 import { Delta, PlaneIcon, StatusPill, todayStr, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Bars, Card, DataTable, Donut, Gauge, Lines, Rank, Row, Stats, type Col } from "../charts";
+import { Bars, Card, DataTable, Donut, Gauge, Lines, Rank, Row, Stats, Tabs, type Col } from "../charts";
 import UzMap from "../UzMap";
 import Sutka from "./Sutka";
 
@@ -11,6 +12,7 @@ export default function Bugun() {
   const { D, S } = useDash();
   const { apLabel, akName, placeName } = useLookups();
   const selAp = useSelAp();
+  const [apMetr, setApMetr] = useState<"pax" | "baj">("pax");
 
   const agg = (k: string, tt?: number) => {
     const rows = selAp(D.bugun || []).filter((r) => r.k === k && (tt == null || r.tt === tt));
@@ -164,9 +166,22 @@ export default function Bugun() {
         </Card>
       </Row>
 
-      <Card title="Aeroportlar kesimida — bugun" hint="Kechaga nisbatan: kecha xuddi shu soatgacha boʻlgan yoʻlovchilar bilan">
-        <DataTable rows={rows} cols={cols} foot={tot} sel={(r) => r.ap === S.ap} />
-      </Card>
+      <Card title="Aeroportlar kesimida — bugun" hint="Kechaga nisbatan: kecha xuddi shu soatgacha boʻlgan yoʻlovchilar bilan"
+        tools={<Tabs options={[["pax", "Yoʻlovchilar"], ["baj", "Reyslar"]]} val={apMetr} onPick={(v) => setApMetr(v)} />}
+        chart={
+          apMetr === "pax" ? (
+            <Bars labels={rows.map((r) => r.ap)} tips={rows.map((r) => apLabel(r.ap))} fmt={N} h={240} labelW={34}
+              series={[{ name: "Bugun", fill: "teal", values: rows.map((r) => r.pax) }, { name: "Kecha shu soatgacha", fill: "orange", values: rows.map((r) => r.kpax) }]} />
+          ) : (
+            <Bars stack labels={rows.map((r) => r.ap)} tips={rows.map((r) => apLabel(r.ap))} fmt={N} h={240} labelW={34}
+              series={[
+                { name: "Qoʻnish (bajarildi)", fill: "teal", values: rows.map((r) => r.qb) },
+                { name: "Uchish (bajarildi)", fill: "orange", values: rows.map((r) => r.ub) },
+                { name: "Rejada qolgan", fill: "grey", values: rows.map((r) => Math.max(0, r.qr + r.ur - r.qb - r.ub - r.bek)) },
+              ]} />
+          )
+        }
+        table={<DataTable rows={rows} cols={cols} foot={tot} sel={(r) => r.ap === S.ap} />} />
     </>
   );
 }

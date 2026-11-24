@@ -585,3 +585,173 @@ export function Stats({ list }: { list: StatItem[] }) {
     </div>
   );
 }
+
+// ---------------------------------------------------------------- yangi: ikki davrli gorizontal solishtirma grafik (jadval oʻrnini bosuvchi chart)
+export type CompareItem = {
+  code: string;
+  name?: string;
+  cur: number;
+  prev?: number | null;
+  delta?: ReactNode;
+  sub?: ReactNode;
+  highlight?: boolean;
+  tip?: ReactNode;
+};
+
+export function CompareBars({
+  items,
+  share,
+  fmt = N,
+  curLabel = "Joriy",
+  prevLabel = "Oldin",
+  searchable,
+  searchPlaceholder = "Qidirish…",
+  maxItems = 15,
+}: {
+  items: CompareItem[];
+  share?: { label: string; value: number; color: string }[];
+  fmt?: (v: number) => string;
+  curLabel?: string;
+  prevLabel?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  maxItems?: number;
+}) {
+  const tip = useTip();
+  const [q, setQ] = useState("");
+  if (!items.length) return <None />;
+  const ql = q.trim().toLowerCase();
+  const filtered = ql
+    ? items.filter((x) => x.code.toLowerCase().includes(ql) || (x.name || "").toLowerCase().includes(ql))
+    : items;
+  const shown = filtered.slice(0, maxItems);
+  const mx = Math.max(1, ...items.map((x) => Math.max(x.cur || 0, x.prev || 0)));
+  const hasPrev = items.some((x) => x.prev != null && x.prev > 0);
+  const shareTot = share ? share.reduce((s, x) => s + Math.max(0, x.value), 0) : 0;
+
+  return (
+    <div className="vg__cmp">
+      {share && shareTot > 0 ? (
+        <div className="vg__cmp-share">
+          <div className="sut__ibal">
+            {share.map((s) => (
+              <span key={s.label}>
+                <i style={{ background: s.color }} />
+                {s.label} <b>{P(s.value / shareTot)}</b>
+              </span>
+            ))}
+          </div>
+          <ProportionalBar segments={share} />
+        </div>
+      ) : null}
+
+      <div className="vg__cmp-bar">
+        <div className="vg__legend" style={{ margin: 0 }}>
+          <span><i style={{ background: "var(--c-pri)" }} />{curLabel}</span>
+          {hasPrev ? <span><i style={{ background: "var(--c-sec)", opacity: 0.65 }} />{prevLabel}</span> : null}
+        </div>
+        {searchable ? (
+          <input
+            type="search"
+            className="vg__cmp-search"
+            value={q}
+            placeholder={searchPlaceholder}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label={searchPlaceholder}
+          />
+        ) : null}
+      </div>
+
+      {!shown.length ? (
+        <None />
+      ) : (
+        <ul className="vg__cmp-list">
+          {shown.map((it, i) => {
+            const cw = it.cur > 0 ? Math.max(2, (it.cur / mx) * 100) : 0;
+            const pw = it.prev && it.prev > 0 ? Math.max(2, (it.prev / mx) * 100) : 0;
+            return (
+              <li
+                key={it.code + "-" + i}
+                className={"vg__cmp-row" + (it.highlight ? " on" : "")}
+                onMouseMove={
+                  it.tip
+                    ? (e) => tip.show(it.tip, e)
+                    : (e) =>
+                        tip.show(
+                          <>
+                            <div className="h">{it.code}{it.name ? " — " + it.name : ""}</div>
+                            <TipRow sw="var(--c-pri)" name={curLabel} val={fmt(it.cur)} />
+                            {it.prev != null ? <TipRow sw="var(--c-sec)" name={prevLabel} val={fmt(it.prev)} /> : null}
+                          </>,
+                          e,
+                        )
+                }
+                onMouseLeave={tip.hide}
+              >
+                <span className="vg__cmp-rk">{String(i + 1).padStart(2, "0")}</span>
+                <div className="vg__cmp-id">
+                  <em className={it.highlight ? "hi" : ""}>{it.code}</em>
+                  {it.name ? <span title={it.name}>{it.name}</span> : null}
+                </div>
+                <div className="vg__cmp-tracks">
+                  <div className="vg__cmp-track"><i style={{ width: cw + "%" }} /></div>
+                  {hasPrev ? <div className="vg__cmp-track prev"><i style={{ width: pw + "%" }} /></div> : null}
+                  {it.sub ? <div className="vg__cmp-sub">{it.sub}</div> : null}
+                </div>
+                <div className="vg__cmp-vals">
+                  <b>{fmt(it.cur)}</b>
+                  {it.prev != null ? <small>{"vs " + fmt(it.prev)}</small> : null}
+                </div>
+                <div className="vg__cmp-d">{it.delta ?? null}</div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- yangi: SLA maqsad chiziqli gorizontal foiz grafigi (masalan OTP 90%)
+export type BenchmarkItem = { code: string; name?: string; pct: number; sub?: string; tip?: ReactNode };
+
+export function BenchmarkBars({ items, target = 90, targetLabel = "Maqsad 90%" }: { items: BenchmarkItem[]; target?: number; targetLabel?: string }) {
+  const tip = useTip();
+  if (!items.length) return <None />;
+  return (
+    <div className="vg__bench">
+      <div className="vg__bench-top">
+        <span className="vg__legend" style={{ margin: 0 }}>
+          <span><i style={{ background: "var(--c-pri)" }} />≥ {target}%</span>
+          <span><i style={{ background: "#818cf8" }} />80–{target}%</span>
+          <span><i style={{ background: "var(--v-red)" }} />&lt; 80%</span>
+        </span>
+        <span className="vg__bench-tgt">{targetLabel}</span>
+      </div>
+      <ul className="vg__bench-list">
+        {items.map((it) => {
+          const p = Math.max(0, Math.min(100, it.pct));
+          const color = p >= target ? "var(--c-pri)" : p >= 80 ? "#818cf8" : "var(--v-red)";
+          return (
+            <li
+              key={it.code}
+              onMouseMove={it.tip ? (e) => tip.show(it.tip, e) : undefined}
+              onMouseLeave={it.tip ? tip.hide : undefined}
+            >
+              <span className="code">
+                <b>{it.code}</b>
+                {it.name ? <small>{it.name}</small> : null}
+              </span>
+              <span className="track">
+                <i style={{ width: p + "%", background: color }} />
+                <u className="mark" style={{ left: target + "%" }} aria-hidden="true" />
+              </span>
+              <b className="val">{p.toFixed(1).replace(".", ",") + "%"}</b>
+              {it.sub ? <small className="sub">{it.sub}</small> : null}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}

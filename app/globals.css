@@ -1317,6 +1317,78 @@ svg text { font: 11px "Inter", "Segoe UI", system-ui, sans-serif; fill: var(--v-
 .avia__sec h3 small { font-size: 12px; font-weight: 500; color: var(--v-muted); margin-left: 6px; }
 .avia__regs { font-size: 12px; line-height: 1.5; color: var(--v-muted); word-break: break-word; }
 
+/* ---- Ikki davrli solishtirma chart (CompareBars) ---- */
+.vg__cmp { display: flex; flex-direction: column; gap: 10px; }
+.vg__cmp-share { margin-bottom: 2px; }
+.vg__cmp-share .vg__pbar { margin: 4px 0 6px; }
+.vg__cmp-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.vg__cmp-search {
+  border: 1px solid var(--v-line);
+  background: var(--v-surface);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--v-ink);
+  min-width: 155px;
+}
+.vg__cmp-search:focus { border-color: var(--c-pri); outline: none; }
+.vg__cmp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.vg__cmp-row {
+  display: grid;
+  grid-template-columns: 22px minmax(92px, 0.9fr) minmax(80px, 1.1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  transition: background-color 0.14s ease, border-color 0.14s ease;
+  cursor: crosshair;
+}
+.vg__cmp-row:hover { background: var(--v-hover); border-color: var(--v-line); }
+.vg__cmp-row.on { background: var(--v-surface); border-color: var(--v-line-hi); }
+.vg__cmp-rk { font-size: 11px; font-weight: 600; color: var(--v-faint); font-variant-numeric: tabular-nums; }
+.vg__cmp-id { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.vg__cmp-id em {
+  font-style: normal;
+  flex: none;
+  min-width: 36px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--v-surface);
+  border: 1px solid var(--v-line);
+  color: var(--v-ink);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+.vg__cmp-id em.hi { background: var(--c-pri); border-color: transparent; color: #ffffff; }
+.vg__cmp-id span { font-size: 12.5px; font-weight: 550; color: var(--v-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vg__cmp-tracks { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.vg__cmp-track { height: 6px; border-radius: 999px; background: var(--v-track); overflow: hidden; }
+.vg__cmp-track i { display: block; height: 100%; border-radius: 999px; background: var(--c-pri); }
+.vg__cmp-track.prev { height: 3.5px; }
+.vg__cmp-track.prev i { background: var(--c-sec); opacity: 0.65; }
+.vg__cmp-sub { font-size: 10.5px; color: var(--v-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vg__cmp-vals { text-align: right; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.vg__cmp-vals b { font-size: 13px; font-weight: 650; color: var(--v-ink); }
+.vg__cmp-vals small { font-size: 10.5px; color: var(--v-faint); }
+.vg__cmp-d { min-width: 68px; display: flex; justify-content: flex-end; }
+
+/* ---- SLA maqsad chiziqli chart (BenchmarkBars) ---- */
+.vg__bench { display: flex; flex-direction: column; gap: 8px; }
+.vg__bench-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vg__bench-tgt { font-size: 11px; font-weight: 650; color: var(--v-teal-ink); background: rgba(59, 130, 246, 0.12); padding: 2px 8px; border-radius: 999px; }
+.vg__bench-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.vg__bench-list li { display: grid; grid-template-columns: minmax(110px, 0.9fr) 1fr 56px 68px; align-items: center; gap: 10px; font-size: 12.5px; cursor: crosshair; }
+.vg__bench-list .code { font-weight: 600; color: var(--v-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vg__bench-list .code small { color: var(--v-muted); font-weight: 400; margin-left: 6px; }
+.vg__bench-list .track { position: relative; height: 8px; border-radius: 999px; background: var(--v-track); overflow: visible; }
+.vg__bench-list .track i { display: block; height: 100%; border-radius: 999px; }
+.vg__bench-list .track u.mark { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1.5px dashed var(--v-teal-ink); opacity: 0.75; text-decoration: none; }
+.vg__bench-list .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--v-ink); font-weight: 650; }
+.vg__bench-list .sub { text-align: right; color: var(--v-faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+
 /* ---- Moslashuvchanlik (Responsive) ---- */
 @media (max-width: 1180px) {
   .vg__row--charts, .vg__row--wide, .uzm__body { grid-template-columns: minmax(0, 1fr); }
@@ -1339,6 +1411,10 @@ svg text { font: 11px "Inter", "Segoe UI", system-ui, sans-serif; fill: var(--v-
   .uzm__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .uzm__rank li { grid-template-columns: 40px minmax(0, 1fr) auto auto; }
   .uzm__rank-name { display: none; }
+  .vg__cmp-row { grid-template-columns: 20px minmax(0, 1fr) auto auto; }
+  .vg__cmp-tracks { display: none; }
+  .vg__bench-list li { grid-template-columns: minmax(90px, 1fr) 1fr 52px; }
+  .vg__bench-list .sub { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .uzm__ring, .wmap__arc, .wmap__ring, .uzm__slide, .wmap__dot, .wmap__uz.on { animation: none; }

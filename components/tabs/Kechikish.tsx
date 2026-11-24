@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { N, P, N1, sum } from "@/lib/format";
 import { TipRow, dGroup, davrNom, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Card, DataTable, Lines, Rank, Row, Stats, Tabs, type RankItem } from "../charts";
+import { BenchmarkBars, Card, DataTable, Lines, Rank, Row, Stats, Tabs, type RankItem } from "../charts";
 import { monthLbl, monthTip } from "./Stat";
 
 export default function Kechikish() {
@@ -108,15 +108,37 @@ export default function Kechikish() {
           table={<DataTable scroll rows={iX} cols={[{ h: "Xizmat", f: (r) => r.code }, { h: "Reyslar", n: true, f: (r) => N(r.value) }, { h: "Oʻrtacha", n: true, f: (r) => r.extra }]} />} />
       </Row>
 
-      <Card title="Aviakompaniyalar: oʻz vaqtida uchish" hint={"Eng koʻp uchgan 25 tasi (kamida 10 ta uchish) · " + dn}>
-        <DataTable scroll rows={al} cols={[
-          { h: "Aviakompaniya", f: (r) => <><b>{r.ak}</b><small>{akName(r.ak)}</small></> },
-          { h: "Uchishlar", n: true, f: (r) => N(r.u) },
-          { h: "Kechikkan", n: true, f: (r) => N(r.k) },
-          { h: "Oʻz vaqtida", n: true, f: (r) => P(1 - r.k / r.u) },
-          { h: "Bekor", n: true, f: (r) => N(r.b) },
-        ]} />
-      </Card>
+      <Card title="Aviakompaniyalar: oʻz vaqtida uchish" hint={"Eng koʻp uchgan 25 tasi (kamida 10 ta uchish) · " + dn}
+        chart={
+          <BenchmarkBars
+            target={90}
+            targetLabel="Maqsad 90%"
+            items={al.slice(0, 18).map((r) => ({
+              code: r.ak,
+              name: akName(r.ak),
+              pct: r.u ? (1 - r.k / r.u) * 100 : 0,
+              sub: N(r.u) + " uchish",
+              tip: (
+                <>
+                  <div className="h">{r.ak} — {akName(r.ak)}</div>
+                  <TipRow sw="var(--c-pri)" name="Oʻz vaqtida" val={P(1 - r.k / r.u)} />
+                  <TipRow name="Uchishlar" val={N(r.u)} />
+                  <TipRow name="Kechikkan" val={N(r.k)} />
+                  <TipRow name="Bekor" val={N(r.b)} />
+                </>
+              ),
+            }))}
+          />
+        }
+        table={
+          <DataTable scroll rows={al} cols={[
+            { h: "Aviakompaniya", f: (r) => <><b>{r.ak}</b><small>{akName(r.ak)}</small></> },
+            { h: "Uchishlar", n: true, f: (r) => N(r.u) },
+            { h: "Kechikkan", n: true, f: (r) => N(r.k) },
+            { h: "Oʻz vaqtida", n: true, f: (r) => P(1 - r.k / r.u) },
+            { h: "Bekor", n: true, f: (r) => N(r.b) },
+          ]} />
+        } />
     </>
   );
 }

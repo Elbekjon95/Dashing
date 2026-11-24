@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AP_LIST, OY, OY_T } from "@/lib/static";
 import { N, N1, T, sum } from "@/lib/format";
 import { Delta, todayStr, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Bars, Card, DataTable, Lines, Row, Tabs } from "../charts";
+import { Bars, Card, CompareBars, DataTable, Lines, Row, Tabs } from "../charts";
 import StatRange from "./StatRange";
 
 export const monthLbl = (mo: string) => OY[+mo.slice(5, 7) - 1] + (mo.slice(5, 7) === "01" ? " " + mo.slice(2, 4) : "");
@@ -70,14 +70,32 @@ export default function Stat() {
         chart={<Lines labels={days.map((d) => d.slice(8, 10) + "." + d.slice(5, 7))} tips={days} fmt={metrFmt} h={230} labelW={56} series={[{ name: "Kunlik", fill: "mint", values: dv, area: true, w: 1.6 }, { name: "7 kunlik oʻrtacha", fill: "teal", values: avg, w: 2.6 }]} />}
         table={<DataTable scroll rows={days.slice().reverse().map((d) => ({ d, v: byD[d] }))} cols={[{ h: "Kun", f: (r) => r.d }, { h: metrNom, n: true, f: (r) => metrFmt(r.v) }]} />} />
 
-      <Card title={metrNom + ": aeroportlar kesimida"} hint="Oxirgi 6 oy va yil boshidan · oʻzgarish — yil boshidan kechagacha, oʻtgan yilning shu davriga">
-        <DataTable rows={rows} foot={tot} sel={(r) => r.ap === S.ap} cols={[
-          { h: "Aeroport", f: (r) => (r.ap === "Jami" ? "Jami" : <><b>{r.ap}</b><small>{apLabel(r.ap)}</small></>) },
-          ...last.map((m) => ({ h: OY[+m.slice(5, 7) - 1] + " " + m.slice(2, 4), n: true, f: (r: any) => metrFmt(r[m]) })),
-          { h: cy + " yil boshidan", n: true, f: (r) => metrFmt(r.ytd) },
-          { h: "Oʻzgarish", n: true, f: (r) => (S.metr === "yuk" ? "—" : <Delta cur={r.cur} prev={r.prev} />) },
-        ]} />
-      </Card>
+      <Card title={metrNom + ": aeroportlar kesimida"} hint="Oxirgi 6 oy va yil boshidan · oʻzgarish — yil boshidan kechagacha, oʻtgan yilning shu davriga"
+        chart={
+          <CompareBars
+            items={rows.slice().sort((a, b) => (b.ytd || 0) - (a.ytd || 0)).map((r) => ({
+              code: r.ap,
+              name: apLabel(r.ap),
+              cur: S.metr === "yuk" || r.cur == null ? r.ytd : r.cur,
+              prev: S.metr === "yuk" ? null : r.prev,
+              highlight: r.ap === S.ap,
+              delta: S.metr === "yuk" ? null : <Delta cur={r.cur} prev={r.prev} />,
+              sub: last.length ? `${OY[+last[last.length - 1].slice(5, 7) - 1]}: ${metrFmt(r[last[last.length - 1]])} · ${cy} YTD: ${metrFmt(r.ytd)}` : undefined,
+            }))}
+            fmt={metrFmt}
+            curLabel={cy + " yil boshidan"}
+            prevLabel={(cy - 1) + " yil shu davri"}
+            maxItems={14}
+          />
+        }
+        table={
+          <DataTable rows={rows} foot={tot} sel={(r) => r.ap === S.ap} cols={[
+            { h: "Aeroport", f: (r) => (r.ap === "Jami" ? "Jami" : <><b>{r.ap}</b><small>{apLabel(r.ap)}</small></>) },
+            ...last.map((m) => ({ h: OY[+m.slice(5, 7) - 1] + " " + m.slice(2, 4), n: true, f: (r: any) => metrFmt(r[m]) })),
+            { h: cy + " yil boshidan", n: true, f: (r) => metrFmt(r.ytd) },
+            { h: "Oʻzgarish", n: true, f: (r) => (S.metr === "yuk" ? "—" : <Delta cur={r.cur} prev={r.prev} />) },
+          ]} />
+        } />
       </StatRange>
     </>
   );

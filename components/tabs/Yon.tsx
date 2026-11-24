@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { AP_LIST, YON } from "@/lib/static";
 import { N, P, sum } from "@/lib/format";
 import { Delta, TipRow, davrNom, useDash, useLookups, useSelAp } from "@/lib/dash";
-import { Card, DataTable, Rank, Row, Stats, type Col } from "../charts";
+import { Card, CompareBars, DataTable, Rank, Row, Stats, type Col } from "../charts";
 import WorldMap from "../WorldMap";
 
 export default function Yon() {
@@ -60,9 +60,37 @@ export default function Yon() {
           chart={<Rank tone="warm" items={cl.slice(0, 15).map((x) => ({ code: x.c, value: x.p, extra: P(x.p / (totP || 1)) }))} />}
           table={<DataTable scroll rows={cl} cols={[{ h: "Davlat", f: (r) => r.c }, { h: "Yoʻlovchilar", n: true, f: (r) => N(r.p) }, { h: "Reyslar", n: true, f: (r) => N(r.r) }]} />} />
       </Row>
-      <Card title="Barcha yoʻnalishlar" hint={dn}>
-        <DataTable scroll rows={list} cols={cols} />
-      </Card>
+      <Card title="Barcha yoʻnalishlar" hint={dn}
+        chart={
+          <CompareBars
+            searchable
+            searchPlaceholder="Yoʻnalishni qidirish…"
+            items={list.map((r) => ({
+              code: r.b,
+              name: `${placeName(r.b)} · ${country(r.b)}`,
+              cur: r.p,
+              prev: p === "ytd" ? r.po : r.pp || null,
+              delta: p === "ytd" ? <Delta cur={r.p} prev={r.po} /> : r.pp ? <Delta cur={r.p} prev={r.pp} /> : <span className="vg__delta vg__delta--same">{P(r.p / (totP || 1))}</span>,
+              sub: `${N(r.r)} reys · ${YON[r.yon] || r.yon}`,
+              tip: (
+                <>
+                  <div className="h">{placeName(r.b)} ({r.b})</div>
+                  <TipRow name="Davlat" val={country(r.b)} />
+                  <TipRow sw="var(--c-pri)" name="Yoʻlovchilar" val={N(r.p)} />
+                  <TipRow sw="var(--c-sec)" name="Reyslar" val={N(r.r)} />
+                </>
+              ),
+            }))}
+            share={[
+              { label: YON.MVL, value: byY.MVL?.p || 0, color: "var(--c-pri)" },
+              { label: YON.VVL, value: byY.VVL?.p || 0, color: "var(--c-sec)" },
+            ]}
+            curLabel="Joriy davr"
+            prevLabel={p === "ytd" ? "Oʻtgan yil" : "Oldingi 30 kun"}
+            maxItems={20}
+          />
+        }
+        table={<DataTable scroll rows={list} cols={cols} />} />
     </>
   );
 }

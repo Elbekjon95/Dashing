@@ -2,9 +2,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { N, N1, P, T } from "@/lib/format";
-import { Delta, todayStr, useDash, useLookups } from "@/lib/dash";
+import { Delta, TipRow, todayStr, useDash, useLookups } from "@/lib/dash";
 import { OY_T } from "@/lib/static";
-import { Card, DataTable, Stats } from "../charts";
+import { Card, CompareBars, DataTable, Stats, Tabs } from "../charts";
 import { ICONS } from "../UzMap";
 import YearCompare, { nz } from "./YearCompare";
 import type { Period } from "./YearCompare";
@@ -48,6 +48,7 @@ export default function StatRange({ children }: { children?: React.ReactNode }) 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [tick, setTick] = useState(0);
+  const [cmpMetr, setCmpMetr] = useState<"pax" | "baj">("pax");
 
   // solishtiriladigan davr
   const cmp = useMemo<[string, string]>(() => {
@@ -131,6 +132,52 @@ export default function StatRange({ children }: { children?: React.ReactNode }) 
     ]} />
   );
 
+  const cmpChart = (
+    rows: any[],
+    nameFn: (k: string) => string,
+    key: "pax" | "baj" | "n",
+    opts?: { shareTop?: boolean; searchable?: boolean; placeholder?: string; hiSet?: Set<string> },
+  ) => {
+    const curK = key === "n" ? "a_n" : "a_" + key;
+    const prevK = key === "n" ? "b_n" : "b_" + key;
+    const sorted = rows.slice().sort((x, y) => (y[curK] || 0) - (x[curK] || 0));
+    const tot = sorted.reduce((s, r) => s + (r[curK] || 0), 0);
+    const shareColors = ["var(--c-pri)", "#38bdf8", "var(--c-sec)"];
+    const share =
+      opts?.shareTop && sorted.length >= 3 && tot > 0
+        ? [
+            ...sorted.slice(0, 3).map((r, i) => ({ label: r.k, value: r[curK] || 0, color: shareColors[i] })),
+            { label: "Boshqalar", value: Math.max(0, tot - sorted.slice(0, 3).reduce((s, r) => s + (r[curK] || 0), 0)), color: "var(--v-line-hi)" },
+          ]
+        : undefined;
+    return (
+      <CompareBars
+        items={sorted.map((r) => ({
+          code: r.k,
+          name: nameFn(r.k),
+          cur: r[curK] || 0,
+          prev: noCmp ? null : r[prevK] || 0,
+          highlight: opts?.hiSet ? opts.hiSet.has(r.k) : S.ap === r.k,
+          delta: noCmp ? null : pct(r[curK] || 0, r[prevK] || 0),
+          sub: key !== "n" ? `Reyslar: ${N(r.a_baj || 0)} · Yoʻlovchi: ${N(r.a_pax || 0)}` : undefined,
+          tip: (
+            <>
+              <div className="h">{r.k}{nameFn(r.k) ? " — " + nameFn(r.k) : ""}</div>
+              <TipRow sw="var(--c-pri)" name={key === "n" ? "Joriy" : key === "pax" ? "Yoʻlovchilar" : "Reyslar"} val={N(r[curK] || 0)} />
+              {!noCmp ? <TipRow sw="var(--c-sec)" name="Oldingi davr" val={N(r[prevK] || 0)} /> : null}
+              {key !== "n" ? <TipRow name={key === "pax" ? "Reyslar" : "Yoʻlovchilar"} val={N(r[key === "pax" ? "a_baj" : "a_pax"] || 0)} /> : null}
+            </>
+          ),
+        }))}
+        share={share}
+        searchable={opts?.searchable}
+        searchPlaceholder={opts?.placeholder}
+        maxItems={15}
+      />
+    );
+  };
+  const cmpMetrTabs = <Tabs options={[["pax", "Yoʻlovchi"], ["baj", "Reyslar"]]} val={cmpMetr} onPick={(v) => setCmpMetr(v)} />;
+
   return (
     <>
       <Card title={<span className="rng__ttl">{ICONS.calendar}Davrlarni solishtirish</span>}
@@ -174,10 +221,21 @@ export default function StatRange({ children }: { children?: React.ReactNode }) 
         <div className={"rng__res" + (loading ? " is-loading" : "")}>
           {loading ? <div className="rng__loading">Bazadan hisoblanmoqda…</div> : null}
           <div className="rng__grid">
-            <Card title="Aeroportlar boʻyicha" hint="Reyslar va yoʻlovchilar: joriy davr va solishtirish">{two(res.ap, (k) => <><b>{k}</b><small>{apLabel(k)}</small></>, "Aeroport")}</Card>
-            <Card title="Aviakompaniyalar" hint="Eng koʻp 15 tasi">{two(res.ak, (k) => <><b>{k}</b><small>{akName(k)}</small></>, "Aviakompaniya")}</Card>
-            <Card title="Yoʻnalishlar" hint="Yoʻlovchilar boʻyicha eng katta 15 tasi">{two(res.yon, (k) => <><b>{k}</b><small>{placeName(k)}</small></>, "Yoʻnalish")}</Card>
-            <Card title="Kechikish sabablari" hint="Kechikish kodi qoʻyilgan reyslar soni (eng koʻp 10 ta kod)">{tbl(res.sabab, (k) => <><b>{k}</b><small>{dDesc(k)}</small></>, "n", "Kod")}</Card>
+            <Card title="Aeroportlar boʻyicha" hint="Reyslar va yoʻlovchilar: joriy davr va solishtirish"
+              tools={cmpMetrTabs}
+              chart={cmpChart(res.ap || [], apLabel, cmpMetr, { shareTop: true })}
+              table={two(res.ap, (k) => <><b>{k}</b><small>{apLabel(k)}</small></>, "Aeroport")} />
+            <Card title="Aviakompaniyalar" hint="Eng koʻp 15 tasi"
+              tools={cmpMetrTabs}
+              chart={cmpChart(res.ak || [], akName, cmpMetr, { shareTop: true, searchable: true, placeholder: "Kod / nom (HY, C6…)", hiSet: new Set(["HY", "C6", "HH", "US", "9S"]) })}
+              table={two(res.ak, (k) => <><b>{k}</b><small>{akName(k)}</small></>, "Aviakompaniya")} />
+            <Card title="Yoʻnalishlar" hint="Yoʻlovchilar boʻyicha eng katta 15 tasi"
+              tools={cmpMetrTabs}
+              chart={cmpChart(res.yon || [], placeName, cmpMetr, { searchable: true, placeholder: "Shaharni qidirish…" })}
+              table={two(res.yon, (k) => <><b>{k}</b><small>{placeName(k)}</small></>, "Yoʻnalish")} />
+            <Card title="Kechikish sabablari" hint="Kechikish kodi qoʻyilgan reyslar soni (eng koʻp 10 ta kod)"
+              chart={cmpChart(res.sabab || [], dDesc, "n")}
+              table={tbl(res.sabab, (k) => <><b>{k}</b><small>{dDesc(k)}</small></>, "n", "Kod")} />
           </div>
           <p className="rng__note">Hisoblangan vaqt: {res.hozir} UTC · {OY_T[+today.slice(5, 7) - 1]} {today.slice(0, 4)}. Joriy davr bugunni oʻz ichiga olsa, raqamlar har 5 daqiqada yangilanadi.</p>
         </div>

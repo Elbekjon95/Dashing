@@ -4,7 +4,7 @@ import { useState } from "react";
 import { N, N1, P, T, sum } from "@/lib/format";
 import { Delta, TipRow, davrNom, useDash, useLookups, useSelAp } from "@/lib/dash";
 import { ST } from "@/lib/static";
-import { Card, DataTable, Rank, Row, Stats, Tabs, type Col } from "../charts";
+import { Card, CompareBars, DataTable, Donut, Rank, Row, Stats, Tabs, type Col } from "../charts";
 
 const TP_TITLE: Record<string, string> = { all: "Barcha aviakompaniyalar", rp: "Muntazam yoʻlovchi reyslari", rc: "Muntazam yuk reyslari", cp: "Charter yoʻlovchi reyslari", cc: "Charter yuk reyslari", bz: "Biznes aviatsiya reyslari", ot: "Boshqa reyslar" };
 const TP_OPTS: [string, string][] = [["all", "Hammasi"], ["rp", "Muntazam · yoʻlovchi"], ["rc", "Muntazam · yuk"], ["cp", "Charter · yoʻlovchi"], ["cc", "Charter · yuk"], ["bz", "Biznes"], ["ot", "Boshqa"]];
@@ -75,18 +75,62 @@ export default function Avia() {
           chart={<Rank tone="warm" items={list.slice().sort((a, b) => b.r - a.r).slice(0, 15).map((x) => ({ code: x.ak, sub: akName(x.ak), value: x.r, extra: P(x.r / (totR || 1)) }))} />} />
       </Row>
       <Card title={TP_TITLE[tp] || "Barcha aviakompaniyalar"} hint={dn + " · aviakompaniyalar boʻyicha"}
-        tools={<Tabs options={TP_OPTS} val={tp} onPick={(v) => setTp(v)} />}>
-        <DataTable scroll rows={tl} cols={cols} />
-      </Card>
+        tools={<Tabs options={TP_OPTS} val={tp} onPick={(v) => setTp(v)} />}
+        chart={
+          <CompareBars
+            searchable
+            searchPlaceholder="Kod / nom (HY, C6…)"
+            items={tl.map((r) => ({
+              code: r.ak,
+              name: akName(r.ak),
+              cur: r.p,
+              prev: p === "ytd" ? r.po : null,
+              highlight: REZ.has(r.ak),
+              delta: p === "ytd" ? <Delta cur={r.p} prev={r.po} /> : <span className="vg__delta vg__delta--same">{P(r.p / (tTotP || 1))}</span>,
+              sub: `${N(r.r)} reys · OTP ${r.u ? P(1 - r.k / r.u) : "—"}`,
+              tip: (
+                <>
+                  <div className="h">{r.ak} — {akName(r.ak)}</div>
+                  <TipRow sw="var(--c-pri)" name="Yoʻlovchilar" val={N(r.p)} />
+                  <TipRow sw="var(--c-sec)" name="Reyslar" val={N(r.r)} />
+                  <TipRow name="Oʻz vaqtida" val={r.u ? P(1 - r.k / r.u) : "—"} />
+                </>
+              ),
+            }))}
+            share={
+              tl.length >= 3 && tTotP > 0
+                ? [
+                    { label: tl[0].ak, value: tl[0].p, color: "var(--c-pri)" },
+                    { label: tl[1].ak, value: tl[1].p, color: "#38bdf8" },
+                    { label: tl[2].ak, value: tl[2].p, color: "var(--c-sec)" },
+                    { label: "Boshqalar", value: Math.max(0, tTotP - tl[0].p - tl[1].p - tl[2].p), color: "var(--v-line-hi)" },
+                  ]
+                : undefined
+            }
+            curLabel="Joriy davr"
+            prevLabel="Oʻtgan yil"
+            maxItems={20}
+          />
+        }
+        table={<DataTable scroll rows={tl} cols={cols} />} />
       <Card title="Reys va samolyot turlari" hint={"Bajarilgan harakatlar · " + dn}>
-        <section className="avia__sec">
-          <h3>Reys turlari <small>IATA xizmat turi</small></h3>
-          <Rank tone="deep" items={st.slice(0, 10).map((x) => ({ code: x.k, sub: ST[x.k] || "Boshqa", value: x.v, extra: P(x.v / (stT || 1)) }))} />
-        </section>
-        <section className="avia__sec">
-          <h3>Samolyot turlari <small>eng koʻp uchragan 12 tasi</small></h3>
-          <Rank items={vs.slice(0, 12).map((x) => ({ code: acName(x.k), value: x.v, extra: P(x.v / (vsT || 1)) }))} />
-        </section>
+        <div className="sut__pies">
+          <section>
+            <h3 style={{ margin: "0 0 10px", fontSize: 14, fontWeight: 650, color: "var(--v-ink)" }}>Reys turlari <small style={{ fontSize: 12, fontWeight: 500, color: "var(--v-muted)", marginLeft: 6 }}>IATA xizmat turi</small></h3>
+            <Donut
+              parts={[
+                ...st.slice(0, 4).map((x, i) => ({ label: (ST[x.k] || x.k) + " (" + x.k + ")", value: x.v, color: ["var(--c-pri)", "#38bdf8", "#818cf8", "var(--c-sec)"][i] })),
+                ...(st.length > 4 ? [{ label: "Boshqalar", value: sum(st.slice(4), "v"), color: "var(--v-line-hi)" }] : []),
+              ]}
+              total={stT}
+              caption="reys"
+            />
+          </section>
+          <section>
+            <h3 style={{ margin: "0 0 10px", fontSize: 14, fontWeight: 650, color: "var(--v-ink)" }}>Samolyot turlari <small style={{ fontSize: 12, fontWeight: 500, color: "var(--v-muted)", marginLeft: 6 }}>eng koʻp uchragan 12 tasi</small></h3>
+            <Rank items={vs.slice(0, 12).map((x) => ({ code: acName(x.k), value: x.v, extra: P(x.v / (vsT || 1)) }))} />
+          </section>
+        </div>
       </Card>
       <Card title="Rezident aviakompaniyalar samolyotlari soni" hint={dn + " · takrorlanmas bort raqamlari · ulush — rezident kompaniyalarning barcha samolyotlariga nisbatan: " + N(fmtT)}
         chart={<Rank items={fmt.slice(0, 15).map((x) => ({ code: x.ak, sub: akName(x.ak), value: x.n, extra: P(x.n / (fmtT || 1)) }))} />}
